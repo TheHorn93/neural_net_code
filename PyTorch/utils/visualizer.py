@@ -138,6 +138,9 @@ def cvMultiSlice( input_data, output_path, axis=2, invert=False ):
     max_val = np.amax( input_data )
     min_val = np.amin( input_data )
     print( "[" + str(min_val) + ":" + str(max_val) + "]" )
+    log = open( output_path +"scale.txt", "w" )
+    log.write( str( min_val ) +" - " +str( max_val ) )
+    log.close
     input_data -= min_val
     fac = 255 / ( max_val-min_val )
     print( str(max_val-min_val) + "->" + str(fac) )

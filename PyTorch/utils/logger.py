@@ -14,14 +14,17 @@ import visualizer
 class Logger:
     
     def __init__( self, path ):
-        self.folder_path = path + time.strftime( "%Y-%m-%d_%H%M%S/" )
+        self.folder = time.strftime( "%Y-%m-%d_%H%M%S" )
+        self.folder_path = path + self.folder +"/"
         if not os.path.exists( self.folder_path ):
             os.makedirs( self.folder_path )
         print( "Logging to: " + self.folder_path )
             
-        self.vis = visdom.Visdom()
+        self.vis = visdom.Visdom( env=self.folder )
         self.train_loss = self.vis.line(np.array([0]), win="train_loss", opts=dict(title="Train Loss"))
         self.eval_loss = self.vis.line(np.array([0]), win="eval_loss", opts=dict(title="Eval Loss"))
+        self.eval_loss = self.vis.line(np.array([0]), win="root_loss", opts=dict(title="Root Loss"))
+        self.eval_loss = self.vis.line(np.array([0]), win="soil_loss", opts=dict(title="Soil Loss"))
         self.f1_score_r = self.vis.line(np.array([0]), win="f1_score_r", opts=dict(title="F1-Score Root"))
         self.re_score_r = self.vis.line(np.array([0]), win="re_score_r", opts=dict(title="Recall Root"))
         self.pre_score_r = self.vis.line(np.array([0]), win="pre_score_r", opts=dict(title="Precision Root"))
@@ -48,11 +51,15 @@ class Logger:
         image = visualizer.getRawImage( fig, True )
         self.vis.image( image, win="output", opts=dict(title="Output") )
     
-    
-    def logEpoch( self, epoch, train_err, eval_err ):
+    def logEpoch( self, epoch, train_err, eval_err, root_loss, soil_loss ):
         ep = np.array([epoch])
         self.vis.line( train_err, ep, win="train_loss", update="append" )
         self.vis.line( eval_err, ep, win="eval_loss", update="append" )
+        self.vis.line( root_loss, ep, win="root_loss", update="append" )
+        self.vis.line( soil_loss, ep, win="soil_loss", update="append" )
+        file = open( self.folder_path + "loss.txt", "a" )
+        file.write( str( epoch ) + ": " + str(train_err) +"\n" )
+        file.close()
         
     def logF1Root( self, epoch, f1_t ):
         ep = np.array([epoch])
@@ -89,7 +96,6 @@ class Logger:
             self.vis.image( image, win="weights_"+str(it), opts=dict(title="Layer " +str(it)) )
             figs[it].clear()
                 
-    #def 
            
 
 class Log:
@@ -97,7 +103,7 @@ class Log:
         self.log_path = log_path
         
     def getWeights( self, path="" ):
-        print( "Loading weights" )
+        print( "Loading weights from: " +self.log_path + path )
         w_path = self.log_path + path
         it = 0
         weight_list = []
@@ -108,7 +114,7 @@ class Log:
                 break
             weight = np.load( w_file )
             bias = np.load( b_file )
-            weight_list.append( (weight, bias) )
+            weight_list.append( [weight, bias] )
             it += 1
         print( "Got " + str(len(weight_list)) + " set of weights" )
         return weight_list
@@ -116,6 +122,7 @@ class Log:
     def visualizeOutputStack( self, input_data, path="", output_folder = "output/" ):
         out_path = self.log_path + path
         folder = out_path +output_folder
+        print( "Writing output stack to: " +folder )
         if not os.path.exists( folder ):
             os.makedirs( folder )
         visualizer.cvMultiSlice( input_data[0,0,:,:,:], folder, 2, True )
@@ -125,7 +132,7 @@ class Log:
         if not os.path.exists( folder ):
             os.makedirs( folder )
         visualizer.cvSaveStack( stack, folder )
-        
+     
 #a = np.random.rand( 1,1,3,3,3 )
 #a = a.astype(np.float32)
 #a = a-0.5

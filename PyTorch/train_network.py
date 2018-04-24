@@ -18,10 +18,10 @@ import acc_funcs as act
 import evaluator as evl
 import init_kernels as init
 
-def feedForward( net, loader, bt_nbr = 0 ):
-    batch, _ = loader.getBatch( bt_nbr, 4 )
+def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
+    batch, _ = loader.getBatch( bt_nbr, bt_size )
     out_list = []
-    for it in range( 4 ):
+    for it in range( bt_size ):
         input_data = batch[:,it,:,:,:].unsqueeze(1)
         output = net( input_data, True )
         output = output.cpu().data.numpy()
@@ -29,7 +29,7 @@ def feedForward( net, loader, bt_nbr = 0 ):
     return out_list
         
 
-def trainNetwork( logging_path, loader, is_cuda, evle, 
+def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle, 
                   net, loss_func, optimizer, num_epochs, lr, arg_list=[] ):
     if is_cuda:
         net.cuda()
@@ -44,29 +44,35 @@ def trainNetwork( logging_path, loader, is_cuda, evle,
         
         #Load Data
         bt_nbr = np.random.randint( num_bts )
-        batch, teacher = loader.getBatch( bt_nbr, 4 )
+        batch, teacher = loader.getBatch( bt_nbr, bt_size )
         
         tr_loss = 0.0
-        for it in range(3):
+        tr_root_loss = 0.0
+        tr_soil_loss = 0.0
+        opt.zero_grad()
+        for it in range( bt_size -eval_size ):
             input_data = batch[:,it,:,:,:].unsqueeze(1)
             teacher_data = teacher[:,it,:,:,:].unsqueeze(1)
             
             #Train
-            opt.zero_grad()
-            output = net( input_data )
-            loss = loss_func( output, teacher_data )
+            output = net( input_data, loss_func.apply_sigmoid )
+            loss, root_loss, soil_loss = loss_func( output, teacher_data, epoch )
+            loss /=( bt_size -eval_size )
             loss.backward()
-            opt.step()
             
             tr_loss += loss
-        
+            tr_root_loss += root_loss
+            tr_soil_loss += soil_loss
+          
+        tr_root_loss /= ( bt_size -eval_size )
+        tr_soil_loss /= ( bt_size -eval_size )
+        opt.step()
         #Eval
         output = net( batch[:,3,:,:,:].unsqueeze(1) )
-        ev_loss = loss_func( output, teacher[:,3,:,:,:].unsqueeze(1) )
-        tr_loss = tr_loss /3
+        ev_loss, _, _ = loss_func( output, teacher[:,3,:,:,:].unsqueeze(1), epoch )
         
         #Log
-        log.logEpoch( epoch, tr_loss.cpu().data.numpy(), ev_loss.cpu().data.numpy() )
+        log.logEpoch( epoch, tr_loss.cpu().data.numpy(), ev_loss.cpu().data.numpy(), tr_root_loss.cpu().data.numpy(), tr_soil_loss.cpu().data.numpy() )
         if( epoch %20 == 0):
             weights = net.getWeightsCuda()
             output = feedForward( net, loader, 0 )
@@ -92,29 +98,35 @@ if __name__ == '__main__':
     input_path = "../../Data/real_scans/Artificial/Gauss+Perlin+Uniform/"
     teacher_path = "../../Data/real_scans/Artificial/Teacher/"
     num_bts = 30
-    num_epochs = 2500
-    lr = 0.005
+    num_epochs = 2000
+    lr = 0.003
     evle = evl.F1Score()
 
     feed_forward = sys.argv[1]
-    if feed_forward:
+    if feed_forward == "True":
+        real = sys.argv[2]
         network = __import__( "2-layer_conv_net" )
-        log_path = logging_path + "2018-04-16_050603/"
+        log_path = logging_path + "2018-04-23_124841" +"/"
         log = logger.Log( log_path )
-        epoch_str = "epoch_" +sys.argv[2] +"/"
+        epoch_str = "epoch_" +sys.argv[3] +"/"
         weights = log.getWeights( epoch_str )
-        net = network.Network( [(3,3,3),(3,3,3)], 8, act.ReLU() )
+        net = network.Network( [(5,5,5),(5,5,5)], 8, act.ReLU() )
         net.setWeights( weights )
         net.cuda()
-        loader = data_loader.BatchLoader( input_path, teacher_path, net.teacher_offset, num_bts, True )
-        output = feedForward( net, loader )
-        teacher = loader.getTeacherNp( 0, 4, loader.offset )
-        for it in range( 4 ):
-            f1, re, pre = evle( output[it][0,0,:,:,:], teacher[0,it,:,:,:] )
-            print( "F1 root: " + str(f1) + " Recall: " +str(re) + " Precision: " +str(pre) )
-            f1, re, pre = evle( output[it][0,0,:,:,:], teacher[0,it,:,:,:], True )
-            print( "F1 soil: " + str(f1) )
-            log.visualizeOutputStack( output[it], epoch_str +"output/", "scan_" +str(it) +"/" )
+        if real == "True":
+            loader = data_loader.RealDataLoader( "../../Data/real_scans/Real MRI/Lupine_small/01_tiff_stack/", True )
+            output = feedForward( net, loader, 0, 1 )
+            log.visualizeOutputStack( output[0], epoch_str +"real_scan/" )
+        else:
+            loader = data_loader.BatchLoader( input_path, teacher_path, net.teacher_offset, num_bts, True )
+            output = feedForward( net, loader )
+            teacher = loader.getTeacherNp( 0, 4, loader.offset )
+            for it in range( 4 ):
+                f1, re, pre = evle( output[it][0,0,:,:,:], teacher[0,it,:,:,:] )
+                print( "F1 root: " + str(f1) + " Recall: " +str(re) + " Precision: " +str(pre) )
+                f1, re, pre = evle( output[it][0,0,:,:,:], teacher[0,it,:,:,:], True )
+                print( "F1 soil: " + str(f1) )
+                log.visualizeOutputStack( output[it], epoch_str +"output/", "scan_" +str(it) +"/" )
         
     else:
         #network = __import__( "1-layer_conv_net" )    
@@ -130,11 +142,18 @@ if __name__ == '__main__':
                     
         network = __import__( "2-layer_conv_net" )
         #kernel_size_list = [[(3,3,3),(1,1,1)],[(5,5,5),(1,1,1)],[(3,3,3),(3,3,3)],[(5,5,5),(3,3,3)]]
-        kernel_size_list = [[(3,3,3),(3,3,3)],[(5,5,5),(3,3,3)]]
-        act_list = [act.Sigmoid() 
-                    #,act.ReLU()
+        kernel_size_list = [[(3,3,3),(3,3,3)],
+                            [(5,5,5),(3,3,3)],
+                            [(7,7,7),(3,3,3)],
+                            [(3,3,3),(5,5,5)],
+                            [(5,5,5),(5,5,5)],
+                            [(7,7,7),(5,5,5)]]
+        act_list = [#act.Sigmoid(), 
+                    act.ReLU()
                    ]
-        loss_list = [losses.CrossEntropyDynamic()]
+        loss_list = [#losses.CrossEntropyDynamic(1500),
+                     losses.NegativeLogLikelihood(1500)
+                    ]
         optimizer_list = [opt.AdamOptimizer()]
         for opti in optimizer_list:
             for lss in loss_list:
@@ -145,7 +164,11 @@ if __name__ == '__main__':
                         log_path = logging_path + "2018-04-16_050603/"
                         log = logger.Log( log_path )
                         w_init = log.getWeights( "epoch_2500/" )
-                        net.setWeights( w_init )
+                        w_init[0][0] = w_init[0][0] /4
+                        w_init[1][0] = w_init[1][0] /4
+                        w_init[0][1] = w_init[0][1] /4
+                        w_init[1][1] = w_init[1][1] /4
+                        #net.setWeights( w_init )
                         loader = data_loader.BatchLoader( input_path, teacher_path, net.teacher_offset, num_bts, True )
-                        trainNetwork( logging_path, loader, True, evle,
+                        trainNetwork( logging_path, loader, 4, 1, True, evle,
                                       net, lss, opti, num_epochs, lr )

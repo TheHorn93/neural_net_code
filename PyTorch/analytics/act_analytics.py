@@ -15,13 +15,13 @@ class ActivationAnalytics:
         self.loader = loader
         self.log = log
     
-    def fillActivationMaps( self, path="" ):
+    def fillActivationMaps( self, bt_size=4, path="" ):
         weights = self.log.getWeights( path )
         self.net.setWeights( weights )
         self.net.cuda()
-        input_data, teacher = self.loader.getBatch( 0, 4 )
+        input_data, teacher = self.loader.getBatch( 0, bt_size )
         act_list = []
-        for it in range( 4 ):
+        for it in range( bt_size ):
             act_list.append( self.net.getActivationMap( input_data[:,it,:,:,:].unsqueeze(1) ) )
         self.act_list = act_list
     
@@ -47,6 +47,7 @@ class ActivationAnalytics:
         return output
     
     def visualizeActivationMaps( self, path="" ):
+        print( "Saving activation maps" )
         scan_it = 0
         for scan in self.act_list:
             layer_it = 0

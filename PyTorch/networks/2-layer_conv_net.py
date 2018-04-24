@@ -9,6 +9,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as funcs
 
+def getParameterConf():
+    parameter_list = []
+    parameter_list.append( [ "kernel", "dims", "act" ] )
+    parameter_list.append( [ "kernel" ] )
+    
+
 class Network( nn.Module ):
     
     def __init__( self, kernel_sizes, num_kernels, activation ):

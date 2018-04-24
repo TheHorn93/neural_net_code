@@ -70,3 +70,43 @@ class BatchLoader:
                 teacher[0,it,:,:,:] = teacher_list[it]
            
         return teacher
+    
+  
+import cv2
+class RealDataLoader:
+    
+    def __init__( self, input_path, is_cuda ):
+        self.path = input_path
+        self.is_cuda = is_cuda
+    
+    def getBatch( self, bt_nbr=0, bt_size=0 ):
+        print( "Loading from: " + self.path )
+        output = np.zeros( [256,256,128], np.ubyte )
+        for it in range( 128 ):
+            im_name = "lupi8_test" + "{0:0>4}".format(it) + ".tif"
+            print( self.path +im_name )
+            im = cv2.imread( self.path + im_name )
+            im = cv2.cvtColor( im, cv2.COLOR_RGB2GRAY )
+            output[:,:,it] = im
+        output = output.reshape( [1,1,256,256,128] )
+        output = output.astype( np.float64 )
+        output /= 255
+        print( str( np.amin(output) ) + "<" + str( np.amax(output) ) )
+        output = Variable( torch.Tensor( output ) )
+        if self.is_cuda:
+            output = output.cuda()
+        return output, Variable( torch.Tensor([]) )
+    
+    def getRealScan( self ):
+        print( "Loading from: " + self.path )
+        output = np.zeros( [256,256,128], np.ubyte )
+        for it in range( 128 ):
+            im_name = "lupi8_test" + "{0:0>4}".format(it) + ".tif"
+            print( self.path +im_name )
+            im = cv2.imread( self.path + im_name )
+            im = cv2.cvtColor( im, cv2.COLOR_RGB2GRAY )
+            output[:,:,it] = im
+        output = output.reshape( [1,1,256,256,128] )
+        output = output.astype( np.float64 )
+        output /= 255
+        return output
