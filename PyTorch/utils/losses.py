@@ -6,6 +6,7 @@ Created on Wed Apr  4 20:45:14 2018
 """
 
 import torch
+import numpy as np
 
 class LossBase:
     
@@ -16,15 +17,17 @@ class LossBase:
     def __str__( self ):
         return "Loss Base Class"
     
-    def weighting( self, loss, teacher, soil, epoch ):
-        weight = torch.mean( teacher )
-        weight_n = torch.mul( soil, weight )
-        weights = torch.add( weight_n, teacher )
-        loss_out = torch.mul( loss, weights )
+    #linear weigthing
+    def weighting( self, loss_out, teacher, soil, epoch ):
+        if epoch < self.gate:
+            weight = torch.mean( teacher )
+            weight_n = torch.mul( soil, weight )
+            weights = torch.add( weight_n, teacher )
+            loss_out = torch.mul( loss_out, weights )
         return loss_out
         
 
-class CrossEntropyDynamic( LossBase ):
+class CrossEntropy( LossBase ):
     
     def __init__( self, gate = 500 ):
         super().__init__( gate, False )
@@ -43,8 +46,7 @@ class CrossEntropyDynamic( LossBase ):
         root_loss = torch.div( torch.mul( teacher, loss_out ), teacher.sum() ).sum()
         
         #Weighting
-        if( epoch < self.gate ):
-            loss_out = self.weighting( loss_out, teacher, soil, epoch )
+        loss_out = self.weighting( loss_out, teacher, soil, epoch )
     
         loss_out = torch.mean( loss_out )
         
@@ -74,14 +76,62 @@ class NegativeLogLikelihood( LossBase ):
         root_loss = torch.div( root_loss, teacher.sum() ).sum()
         soil_loss = torch.div( soil_loss, soil.sum() ).sum()
         
-        if( epoch < self.gate ):
-            loss_out = self.weighting( loss_out, teacher, soil, epoch )
+        loss_out = self.weighting( loss_out, teacher, soil, epoch )
             
         loss_out = torch.mean( loss_out )
         
         return ( loss_out, root_loss, soil_loss )
 
 
+class LossDynaBase:
+    
+    def __init__( self, gate_init, gate_end, apply_sigmoid ):
+        self.gate_init = gate_init
+        self.gate_end = gate_end
+        self.weight_interval = gate_end -gate_init
+        self.apply_sigmoid = apply_sigmoid
+        
+    def __str__( self ):
+        return "Dynamicaly weighted Loss Base"
+    
+    def weighting( self, loss_out, teacher, soil, epoch ):
+        if epoch < self.gate_end:
+            weight = torch.mean( teacher )
+            if epoch > self.gate_init:
+                weight_val = -( self.gate_init -epoch ) /self.weight_interval
+                #weight_val = np.power( weight_val, 1/3 )
+                weight += (1 -weight) *weight_val
+            weight_n = torch.mul( soil, weight )
+            weights = torch.add( weight_n, teacher )
+            loss_out = torch.mul( loss_out, weights )
+        return loss_out
+
+
+class CrossEntropyDynamic( LossDynaBase ):
+    
+    def __init__( self, gate_init = 400, gate_end = 600 ):
+        super().__init__( gate_init, gate_end, False )
+        
+    def __str__( self ):
+        return "Dynamic, changing weighted CrossEntropy " +str(self.gate_init) +" -> " +str(self.gate_end)
+    
+    def __call__( self, inp, teacher, epoch ):
+        #Cross Entropy with logits
+        loss_out = torch.max( inp, torch.zeros_like( inp ) )
+        loss_out = loss_out - torch.mul( inp, teacher )
+        loss_out = loss_out + torch.log1p( torch.exp( -torch.abs( inp ) ) )
+        
+        soil = torch.add( torch.ones_like(teacher), -teacher )
+        soil_loss = torch.div( torch.mul( soil, loss_out ), soil.sum() ).sum()
+        root_loss = torch.div( torch.mul( teacher, loss_out ), teacher.sum() ).sum()
+        
+        #Weighting
+        loss_out = self.weighting( loss_out, teacher, soil, epoch )
+    
+        loss_out = torch.mean( loss_out )
+        
+        return ( loss_out, root_loss, soil_loss )    
+    
 #inp = torch.Tensor([[10,5,-10,-10],[-10,10,-10,-10],[-10,-10,10,-10]])
 #inp = torch.Tensor([[0,0,0,0],[0,1,0,0],[0,0,1,0]])
 #teacher = torch.Tensor([[1,0,0,0],[0,1,0,0],[0,0,1,0]])
@@ -97,4 +147,6 @@ class NegativeLogLikelihood( LossBase ):
 #    print( str(root) + ", " + str(soil) )
 #vis.line( y, x, win="Test" )
 #print( loss( inp, teacher, 1 ) )
-   
+#loss = CrossEntropyDynamic(10,20)
+#for epoch in range(10,21):
+#    loss.weighting( torch.Tensor( [1,0,0,0,0,0] ), torch.Tensor([1,0,0,0,0,0]), torch.Tensor([0,1,1,1,1,1]), epoch )

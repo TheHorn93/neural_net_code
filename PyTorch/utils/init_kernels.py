@@ -7,83 +7,114 @@ Created on Wed Apr 11 03:25:33 2018
 
 import numpy as np
 
-class kernel3:
+class kernel:
     
-    def edgeFilterFB( scale = 0.2 ):
-        a = np.array( [[[-1,-1,-1],[0,0,0],[1,1,1]],
-                       [[-1,-1,-1],[0,0,0],[1,1,1]],
-                       [[-1,-1,-1],[0,0,0],[1,1,1]]] )
-        return a*scale
+    def __init__( self, size ):
+        self.s = size
     
-    def edgeFilterBF( scale = 0.2 ):
-        a = np.array( [[[1,1,1],[0,0,0],[-1,-1,-1]],
-                       [[1,1,1],[0,0,0],[-1,-1,-1]],
-                       [[1,1,1],[0,0,0],[-1,-1,-1]]] )
-        return a*scale
-    
-    def edgeFilterLR( scale = 0.2 ):
-        a = np.array( [[[-1,0,1],[-1,0,1],[-1,0,1]],
-                       [[-1,0,1],[-1,0,1],[-1,0,1]],
-                       [[-1,0,1],[-1,0,1],[-1,0,1]]] )
-        return a*scale
-    
-    def edgeFilterRL( scale = 0.2 ):
-        a = np.array( [[[1,0,-1],[1,0,-1],[1,0,-1]],
-                       [[1,0,-1],[1,0,-1],[1,0,-1]],
-                       [[1,0,-1],[1,0,-1],[1,0,-1]]] )
-        return a*scale
-    
-    def edgeFilterTB( scale = 0.2 ):
-        a = np.array( [[[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]],
-                       [[0,0,0],[0,0,0],[0,0,0]],
-                       [[1,1,1],[1,1,1],[1,1,1]]] )
-        return a*scale
-    
-    def edgeFilterBT( scale = 0.2 ):
-        a = np.array( [[[1,1,1],[1,1,1],[1,1,1]],
-                       [[0,0,0],[0,0,0],[0,0,0]],
-                       [[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]]] )
-        return a*scale
-    
-    def edgeFilterLBRT( scale = 0.2 ):
-        a = np.array( [[[1,1,0],[1,1,0],[1,1,0]],
-                       [[1,0,-1],[1,0,-1],[1,0,-1]],
-                       [[0,-1,-1],[0,-1,-1],[0,-1,-1]]] )
-        return a*scale
-    
-    def edgeFilterRTLB( scale = 0.2 ):
-        a = np.array( [[[-1,-1,0],[-1,-1,0],[-1,-1,0]],
-                       [[-1,0,1],[-1,0,1],[-1,0,1]],
-                       [[0,1,1],[0,1,1],[0,1,1]]] )
-        return a*scale
-    
-    def init3x3( kernels =8 ):
-        a = np.zeros( [kernels,1,3,3,3] )
-        a[0,0,:,:,:] = kernel3.edgeFilterFB()
-        a[1,0,:,:,:] = kernel3.edgeFilterBF()
-        a[2,0,:,:,:] = kernel3.edgeFilterLR()
-        a[3,0,:,:,:] = kernel3.edgeFilterRL()
-        a[4,0,:,:,:] = kernel3.edgeFilterTB()
-        a[5,0,:,:,:] = kernel3.edgeFilterBT()
-        a[6,0,:,:,:] = kernel3.edgeFilterLBRT()
-        a[7,0,:,:,:] = kernel3.edgeFilterRTLB()
+    def get1DGrad( self ):
+        a = np.zeros( self.s )
+        wing = (self.s -1) /2
+        for it in range( self.s ):
+            a[it] = ( it -wing ) /wing
         return a
     
-    def fillList( layers=2, scale=0.2 ):
-        w_list = []
-        w_list.append( ( kernel3.init3x3() *scale, np.random.rand(8) *scale) )
-        w_list.append( ( np.random.rand( 1,8,3,3,3 ) *scale, np.random.rand(1) *scale) )
-        return w_list
-        
+    def get2DGrad( self, invert ):
+        a = np.zeros( (self.s,self.s) )
+        grad = self.get1DGrad()
+        if invert:
+            grad = np.flipud( grad )
+        for it in range( self.s ):
+            a[it,:] = grad
+        return a
+    
+    def get2DGradDiag( self, orientation ):
+        a = np.zeros( (self.s,self.s) )
+        grad = self.get1DGrad()
+        for it in range( self.s *self.s ):
+            x, y = int( it /self.s ), it %self.s
+            if orientation == 0:
+                a[x,y] = (grad[x] +grad[y]) /2
+            elif orientation == 1:
+                a[x,-1-y] = (grad[x] +grad[y]) /2
+            elif orientation == 2:
+                a[-1-x,-1-y] = (grad[x] +grad[y]) /2
+            else:
+                a[-1-x,y] = (grad[x] +grad[y]) /2
+        return a
+ 
+    def center2DSorround( self ):
+        a = np.zeros( (self.s,self.s) )
+        center = int( (self.s -1) /2 )
+        grad = np.zeros(self.s)
+        for it in range( center+1 ):
+            grad[it] = it+1
+            grad[-it-1] = it+1
+        for it in range( self.s ):
+            a[:,it] = grad*grad[it]
+        a /= a[center, center]
+        return a
+    
+    def get3DGrad( self, orientation, invert ):
+        a = np.zeros( (self.s,self.s,self.s) )
+        grad = self.get2DGrad( invert )
+        for it in range( self.s ):
+            a[it,:,:] = grad
+        if orientation == 1:
+            a = a.transpose()
+        elif orientation == 2:
+            for it in range( self.s ):
+                a[:,:,it] = grad 
+        return a
+    
+    def get3DGradDiag( self, orientation, invert ):
+        a = np.zeros( (self.s,self.s,self.s) )
+        grad = self.get2DGradDiag( orientation )
+        for it in range( self.s ):
+            a[it,:,:] = grad
+        if invert:
+            a = a.transpose()
+        return a
+    
+    def get3DCenterSorround( self, cylinder ):
+        a = np.zeros( (self.s,self.s,self.s) )
+        grad = self.center2DSorround()
+        for it in range( self.s ):
+            a[it,:,:] = grad *grad[it, int( (self.s-1) /2)]
+        return a
 
-class kernel5: 
+    def fill8( self, scale = 0.2 ):
+        a = np.zeros( (8,1,self.s,self.s,self.s) )
+        l = [[0,False],[1,False],[2,False],[0,True],[1,True],[2,True]]
+        for it in range( 6 ):
+            a[it,0,:,:,:] = self.get3DGrad( l[it][0], l[it][1] )
+        a[6,0,:,:,:] = self.get3DCenterSorround(0)
+        a[7,0,:,:,:] = np.random.rand( self.s,self.s,self.s )
+        return (a*scale,None)
     
-    def edgeFilterFB( scale = 0.2 ):
-        a = np.array( [[[-1,-1,-1,-1,-1],[-0.5,-0.5,-0.5,-0.5,-0.5],[0,0,0,0,0],[0.5,0.5,0.5,0.5,0.5],[1,1,1,1,1]],
-                       [[-1,-1,-1,-1,-1],[-0.5,-0.5,-0.5,-0.5,-0.5],[0,0,0,0,0],[0.5,0.5,0.5,0.5,0.5],[1,1,1,1,1]],
-                       [[-1,-1,-1,-1,-1],[-0.5,-0.5,-0.5,-0.5,-0.5],[0,0,0,0,0],[0.5,0.5,0.5,0.5,0.5],[1,1,1,1,1]],
-                       [[-1,-1,-1,-1,-1],[-0.5,-0.5,-0.5,-0.5,-0.5],[0,0,0,0,0],[0.5,0.5,0.5,0.5,0.5],[1,1,1,1,1]],
-                       [[-1,-1,-1,-1,-1],[-0.5,-0.5,-0.5,-0.5,-0.5],[0,0,0,0,0],[0.5,0.5,0.5,0.5,0.5],[1,1,1,1,1]]] )
-        return a*scale
-    
-    #TODO Rest
+    def fill8Diag( self, scale = 0.2 ):
+        a = np.zeros( (8,1,self.s,self.s,self.s) )
+        l1, l2 = range(4), [False,True]
+        for ori in l1:
+            for inv in l2:
+                it = ori + inv*4
+                a[it,0,:,:,:] = self.get3DGradDiag( ori, inv )
+        return (a*scale, None)
+      
+    def fill16( self, scale = 0.2 ):
+        a = np.zeros( (16,1,self.s,self.s,self.s) )
+        k1, _ = self.fill8( scale )
+        k2, _ = self.fill8Diag( scale )
+        a[0:8,:,:,:,:] = k1
+        a[8:16,:,:,:,:] = k2
+        return (a, None)
+        
+#init = kernel( 5 )
+#print( init.get3DCenterSorround(0) )
+#print( init.fill8() )
+#for axis in range(3):
+#    for inv in [False, True]:
+#        print( str( init.get3DGradDiag(axis, inv) ) +"\n----------\n" )
+#for ori in range(3):
+#    a = init.get3DGrad(ori, False)
+#    print( str( a ) +"\n----------\n" )    

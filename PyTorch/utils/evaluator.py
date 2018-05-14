@@ -26,10 +26,18 @@ class F1Score:
         return tp.sum()
         
     def precision( self, output, gt ):
-        return self.truePositives( output, gt ) /np.where( output > self.threshold, 1.0, 0.0 ).sum()
+        prec_sum = np.where( output > self.threshold, 1.0, 0.0 ).sum()
+        if prec_sum > 0:
+            return self.truePositives( output, gt ) /prec_sum
+        else:
+            return 1e-15
         
     def recall( self, output, gt ):
-        return self.truePositives( output, gt ) /gt.sum()
+        rec_sum = gt.sum()
+        if rec_sum > 0:
+            return self.truePositives( output, gt ) /rec_sum
+        else:
+            return 1e-15
     
     
 #a = np.array([[0,0,0,0,0,0],[0,0,0,0,0,1],[0,0,0,0,1,1],[0,0,0,1,1,1],[0,0,1,1,1,1],[0,1,1,1,1,1],[1,1,1,1,1,1]])

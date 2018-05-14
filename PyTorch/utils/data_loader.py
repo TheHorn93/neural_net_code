@@ -51,6 +51,38 @@ class BatchLoader:
             
         return torch_batch, torch_teacher
     
+    def getBatchAndShuffle( self, bt_size ):
+        bt_nbr = np.random.randint( self.num_bts, size=4 )
+        pt_str = "Loading from batches: "
+        
+        data_list = []
+        teacher_list = []
+        for it in range( bt_size ):
+            pt_str += str(bt_nbr[it]) +", "
+            bt_path = self.input_path +'batch_' +str( bt_nbr[it] ) +'/'
+            data_list.append( np.load( bt_path +getFilename( it ) ) )
+            teacher_list.append( np.load( self.teacher_path +getFilename( it ) ) )
+            
+        print( pt_str )
+        shape = data_list[0].shape
+        bt_data_size = ( 1, bt_size, shape[0], shape[1], shape[2] )
+        teacher_data_size = ( 1, bt_size, shape[0] -int(self.offset*2), shape[1] -int(self.offset*2), shape[2] -int(self.offset*2) )
+
+        batch = np.empty( bt_data_size )
+        teacher = np.empty( teacher_data_size )
+        
+        for it in range( bt_size ):
+            batch[0,it,:,:,:] = data_list[it]
+            teacher[0,it,:,:,:] = teacher_list[it][self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
+        torch_batch = Variable( torch.Tensor(batch) )
+        torch_teacher = Variable( torch.Tensor(teacher) )
+        if self.is_cuda:
+            torch_batch = torch_batch.cuda()
+            torch_teacher = torch_teacher.cuda()
+            
+        return torch_batch, torch_teacher
+            
+    
     
     def getTeacherNp( self, bt_nbr, bt_size, offset = 0 ):
         print( "Loading teacher " +str(bt_nbr) )
@@ -110,3 +142,4 @@ class RealDataLoader:
         output = output.astype( np.float64 )
         output /= 255
         return output
+    

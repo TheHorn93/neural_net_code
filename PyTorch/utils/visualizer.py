@@ -10,6 +10,8 @@ import matplotlib as mlp
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import plotly
+import plotly.graph_objs as go
 import cv2
 
 def flattenWeights( weights ):
@@ -163,6 +165,12 @@ def cvSaveStack( stack, output_path, invert=False ):
         im = stack[it] *fac
         cv2.imwrite( output_path +str(it) +".png", im )
     
+def scatterRoot( stack, path ):
+    pr_stack = np.where( stack > 0.5, stack, 0 )
+    c = pr_stack.nonzero()
+    fig = go.Figure(data=[go.Scatter3d(x=c[0],y=c[1],z=c[2], mode='markers', marker=dict(symbol='circle-dot', size=1))],
+                    layout=go.Layout(scene=dict(aspectmode='data')))
+    plotly.offline.plot(fig, filename=path)
 #a = np.random.rand( 1,8,1,1,1,1)
 #print(a)
 #b = flattenWeights(a)

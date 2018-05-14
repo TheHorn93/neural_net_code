@@ -132,6 +132,28 @@ class Log:
         if not os.path.exists( folder ):
             os.makedirs( folder )
         visualizer.cvSaveStack( stack, folder )
+        
+    def saveOutputAsNPY( self, stack, path="", resize=None ):
+        folder = self.log_path + path
+        print( "Saving output to: " +folder )
+        if not os.path.exists( folder ):
+            os.makedirs( folder )
+        if resize is not None:
+            x_s = int(( resize[0] -stack.shape[2] ) /2)
+            y_s = int(( resize[1] -stack.shape[3] ) /2)
+            z_s = int(( resize[2] -stack.shape[4] ) /2)
+            out = np.zeros( (resize) )
+            out[x_s:-x_s,y_s:-y_s,z_s:-z_s] = stack[0,0,:,:,:]
+        else:
+            out = stack
+        np.save( folder +"output.npy", out )
+        
+    def saveScatterPlot( self, stack, path="" ):
+        folder = self.log_path + path
+        print( "Saving scatter to: " +folder )
+        if not os.path.exists( folder ):
+            os.makedirs( folder )
+        visualizer.scatterRoot( stack, folder +"scatter.html" )
      
 #a = np.random.rand( 1,1,3,3,3 )
 #a = a.astype(np.float32)
