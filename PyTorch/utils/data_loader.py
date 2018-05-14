@@ -15,7 +15,7 @@ def getFilename( n ):
 
 class BatchLoader:
     
-    def __init__( self, input_path, teacher_path, offset, num_bts, is_cuda = False ):
+    def __init__( self, input_path, teacher_path, offset, num_bts, is_cuda = -1 ):
         self.input_path = input_path
         self.teacher_path = teacher_path
         self.offset = int(offset)
@@ -45,9 +45,9 @@ class BatchLoader:
             teacher[0,it,:,:,:] = teacher_list[it][self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
         torch_batch = Variable( torch.Tensor(batch) )
         torch_teacher = Variable( torch.Tensor(teacher) )
-        if self.is_cuda:
-            torch_batch = torch_batch.cuda()
-            torch_teacher = torch_teacher.cuda()
+        if self.is_cuda > -1:
+            torch_batch = torch_batch.cuda(self.is_cuda)
+            torch_teacher = torch_teacher.cuda(self.is_cuda)
             
         return torch_batch, torch_teacher
     
@@ -76,9 +76,9 @@ class BatchLoader:
             teacher[0,it,:,:,:] = teacher_list[it][self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
         torch_batch = Variable( torch.Tensor(batch) )
         torch_teacher = Variable( torch.Tensor(teacher) )
-        if self.is_cuda:
-            torch_batch = torch_batch.cuda()
-            torch_teacher = torch_teacher.cuda()
+        if self.is_cuda > -1:
+            torch_batch = torch_batch.cuda(self.is_cuda)
+            torch_teacher = torch_teacher.cuda(self.is_cuda)
             
         return torch_batch, torch_teacher
             
@@ -107,7 +107,7 @@ class BatchLoader:
 import cv2
 class RealDataLoader:
     
-    def __init__( self, input_path, is_cuda ):
+    def __init__( self, input_path, is_cuda = -1 ):
         self.path = input_path
         self.is_cuda = is_cuda
     
@@ -125,8 +125,8 @@ class RealDataLoader:
         output /= 255
         print( str( np.amin(output) ) + "<" + str( np.amax(output) ) )
         output = Variable( torch.Tensor( output ) )
-        if self.is_cuda:
-            output = output.cuda()
+        if self.is_cuda > -1:
+            output = output.cuda(self.is_cuda)
         return output, Variable( torch.Tensor([]) )
     
     def getRealScan( self ):

@@ -32,8 +32,8 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
 
 def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle, 
                   net, loss_func, optimizer, num_epochs, str_epochs, lr, arg_list=[] ):
-    if is_cuda:
-        net.cuda()
+    if is_cuda > -1:
+        net.cuda( is_cuda )
     
     print( "Training for " +str(num_epochs) )
     
@@ -58,18 +58,26 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
             batch, teacher = loader.getBatchAndShuffle( bt_size )
             
             for it in range( bt_size -eval_size ):
-                input_data = batch[:,it,:,:,:].unsqueeze(1)
-                teacher_data = teacher[:,it,:,:,:].unsqueeze(1)
-                
-                #Train
-                output = net( input_data, loss_func.apply_sigmoid )
-                loss, root_loss, soil_loss = loss_func( output, teacher_data, epoch )
-                loss /=( bt_size -eval_size ) *bt_per_it
-                loss.backward()
-                
-                tr_loss += loss
-                tr_root_loss += root_loss
-                tr_soil_loss += soil_loss
+                num_slices = 2
+                cut_it = int( round( batch.size()[4] /num_slices ) )
+                cut_id = 0
+                for jt in range( num_slices ):
+                    print( "   Slice: "  +str(jt) )
+                    start, end = cut_id, min( batch.size()[4], cut_it *(jt+1) )
+                    start_t, end_t = start, min( teacher.size()[4], end -net.teacher_offset*2 )
+                    cut_id = end
+                    input_data = batch[:,it,:,:,start:end].unsqueeze(1)
+                    teacher_data = teacher[:,it,:,:,start_t:end_t].unsqueeze(1)
+                    
+                    #Train
+                    output = net( input_data, loss_func.apply_sigmoid )
+                    loss, root_loss, soil_loss = loss_func( output, teacher_data, epoch )
+                    loss /=( bt_size -eval_size ) *bt_per_it *num_slices
+                    loss.backward()
+                    
+                    tr_loss += loss
+                    tr_root_loss += root_loss
+                    tr_soil_loss += soil_loss
                 
         #Eval
         output = net( batch[:,3,:,:,:].unsqueeze(1) )
@@ -77,8 +85,8 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
             
         ev_loss += loss
            
-        tr_root_loss /= ( bt_size -eval_size ) *bt_per_it
-        tr_soil_loss /= ( bt_size -eval_size ) *bt_per_it
+        tr_root_loss /= ( bt_size -eval_size ) *bt_per_it *num_slices
+        tr_soil_loss /= ( bt_size -eval_size ) *bt_per_it *num_slices
         opt.step()
 
         
@@ -145,26 +153,27 @@ if __name__ == '__main__':
     epochs = [ 500,900,1200 ]
     lr = 0.0008
     evle = evl.F1Score()
+    is_cuda = 0
 
     args = parseSysArgs()
     if args[0]:
-        network = __import__( "2-layer_conv_net" )
+        network = __import__( "3-layer_conv_net" )
         #log_path = logging_path + "2018-04-30_061116" +"/"
         log_path = logging_path + sys.argv[3] +"/"
         log = logger.Log( log_path )
         epoch_str = "epoch_" +sys.argv[4] +"/"
         weights = log.getWeights( epoch_str )
-        net = network.Network( [(11,11,11),(7,7,7)], 16, act.ReLU() )
+        net = network.Network( [(3,3,3),(3,3,3),(3,3,3)], (16,8), (act.ReLU(),act.ReLU()) )
         net.setWeights( weights )
         net.cuda()
         if args[1]:
-            loader = data_loader.RealDataLoader( "../../Data/real_scans/Real MRI/Lupine_small/01_tiff_stack/", True )
+            loader = data_loader.RealDataLoader( "../../Data/real_scans/Real MRI/Lupine_small/01_tiff_stack/", is_cuda )
             output = feedForward( net, loader, 0, 1 )
             log.visualizeOutputStack( output[0], args[3] )
             log.saveOutputAsNPY( output[0], epoch_str, resize=(256,256,128) )
             log.saveScatterPlot( output[0], epoch_str )
         else:
-            loader = data_loader.BatchLoader( input_path, teacher_path, net.teacher_offset, num_bts, True )
+            loader = data_loader.BatchLoader( input_path, teacher_path, net.teacher_offset, num_bts, is_cuda )
             output = feedForward( net, loader )
             teacher = loader.getTeacherNp( 0, 4, loader.offset )
             for it in range( 4 ):
@@ -216,7 +225,7 @@ if __name__ == '__main__':
                         net = network.Network( ks_size, num_kernels, acti )
                         #w_init = init.kernel( ks_size[0][0] )
                         str_epoch = 1
-                        loader = data_loader.BatchLoader( input_path, teacher_path, net.teacher_offset, num_bts, True )
+                        loader = data_loader.BatchLoader( input_path, teacher_path, net.teacher_offset, num_bts, is_cuda )
                         if args[1]:
                             if not args[2]:
                                 log_path = logging_path +args[3]
@@ -230,7 +239,7 @@ if __name__ == '__main__':
                                 net.setWeights( w_init )
                                 str_epoch = args[5]+1
                                 epochs[2] = args[6]
-                                trainNetwork( logging_path, loader, 4, 1, True, evle,
+                                trainNetwork( logging_path, loader, 4, 1, is_cuda, evle,
                                               net, lss, opti, epochs[2], str_epoch, lr )
                             else:
                                 stages = [([(3,3,3),(3,3,3)],8,act.ReLU()),
@@ -242,8 +251,8 @@ if __name__ == '__main__':
                                           ([(11,11,11),(5,5,5)],16,act.ReLU()),
                                           ([(11,11,11),(5,5,5)],16,act.Sigmoid())]
                                 cscd = cascade.Network( stages )
-                                trainCascade( logging_path, loader, 4, 1, True, evle,
+                                trainCascade( logging_path, loader, 4, 1, is_cuda, evle,
                                               cscd, lss, opti, epochs[2], str_epoch, lr )
                         else:
-                            trainNetwork( logging_path, loader, 4, 1, True, evle,
+                            trainNetwork( logging_path, loader, 4, 1, is_cuda, evle,
                                               net, lss, opti, epochs[2], str_epoch, lr )
