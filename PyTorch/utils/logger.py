@@ -53,10 +53,10 @@ class Logger:
     
     def logEpoch( self, epoch, train_err, eval_err, root_loss, soil_loss ):
         ep = np.array([epoch])
-        self.vis.line( train_err, ep, win="train_loss", update="append" )
-        self.vis.line( eval_err, ep, win="eval_loss", update="append" )
-        self.vis.line( root_loss, ep, win="root_loss", update="append" )
-        self.vis.line( soil_loss, ep, win="soil_loss", update="append" )
+        self.vis.line( np.array([train_err]), ep, win="train_loss", update="append" )
+        self.vis.line( np.array([eval_err]), ep, win="eval_loss", update="append" )
+        self.vis.line( np.array([root_loss]), ep, win="root_loss", update="append" )
+        self.vis.line( np.array([soil_loss]), ep, win="soil_loss", update="append" )
         file = open( self.folder_path + "loss.txt", "a" )
         file.write( str( epoch ) + ": " + str(train_err) +"\n" )
         file.close()

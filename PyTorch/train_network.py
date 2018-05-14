@@ -7,17 +7,18 @@ Created on Wed Apr  4 19:28:05 2018
 
 import numpy as np
 import sys
-sys.path.insert( 0, 'networks/' )
+sys.path.insert( 0, '/home/work/horn/code/neural_net_code/PyTorch/networks/' )
 
-sys.path.insert( 1, 'utils/' )
+sys.path.insert( 1, '/home/work/horn/code/neural_net_code/PyTorch/utils/' )
 import losses
 import optimizer as opt
 import logger
-import bc4_data_loader
+import bc4_data_loader as data_loader
 import acc_funcs as act
 import evaluator as evl
 import init_kernels as init
 import time
+import torch
 
 def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
     batch, _ = loader.getBatch( bt_nbr, bt_size )
@@ -32,7 +33,7 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
 
 def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle, 
                   net, loss_func, optimizer, num_epochs, str_epochs, lr, arg_list=[] ):
-    if is_cuda > -1:
+    if is_cuda is not None:
         net.cuda( is_cuda )
     
     print( "Training for " +str(num_epochs) )
@@ -58,7 +59,7 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
             batch, teacher = loader.getBatchAndShuffle( bt_size )
             
             for it in range( bt_size -eval_size ):
-                num_slices = 2
+                num_slices = 1
                 cut_it = int( round( batch.size()[4] /num_slices ) )
                 cut_id = 0
                 for jt in range( num_slices ):
@@ -89,6 +90,8 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
         tr_soil_loss /= ( bt_size -eval_size ) *bt_per_it *num_slices
         opt.step()
 
+        print( tr_loss.cpu().data.numpy() )
+        print( ev_loss.cpu().data.numpy() )
         
         #Log
         log.logEpoch( epoch, tr_loss.cpu().data.numpy(), ev_loss.cpu().data.numpy(), tr_root_loss.cpu().data.numpy(), tr_soil_loss.cpu().data.numpy() )
@@ -146,14 +149,14 @@ def parseSysArgs():
 
 
 if __name__ == '__main__':
-    logging_path = "/home/work/horn/Data/"
-    input_path = "/home/work/uzman/manual_reconstruction"
+    logging_path = "/home/work/horn/data/"
+    input_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
     teacher_path = "../../Data/real_scans/Artificial/Teacher/"
     num_bts = 60
     epochs = [ 500,900,1200 ]
     lr = 0.0008
     evle = evl.F1Score()
-    is_cuda = 0
+    is_cuda = torch.device('cuda')
 
     args = parseSysArgs()
     if args[0]:

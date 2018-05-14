@@ -50,8 +50,10 @@ class BatchLoader:
                          +"256x256x128/"
                         )
             print( str(it) +": " + file_str )
-            data_list.append( np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) ) )
-            teacher_list.append( np.load( file_str +"ground_truth.npy" ) )
+            data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
+            teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
+            data_list.append( data.astype(np.float32) /255 )
+            teacher_list.append( teacher.astype(np.float32) /255 )
             
         shape = data_list[0].shape
         bt_data_size = ( 1, bt_size, shape[0], shape[1], shape[2] )
@@ -65,7 +67,7 @@ class BatchLoader:
             teacher[0,it,:,:,:] = teacher_list[it][self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
         torch_batch = Variable( torch.Tensor(batch) )
         torch_teacher = Variable( torch.Tensor(teacher) )
-        if self.is_cuda > -1:
+        if self.is_cuda is not None:
             torch_batch = torch_batch.cuda(self.is_cuda)
             torch_teacher = torch_teacher.cuda(self.is_cuda)
             
@@ -93,8 +95,10 @@ class BatchLoader:
                          +"256x256x128/"
                         )
             print( str(it) +": " + file_str )
-            data_list.append( np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) ) )
-            teacher_list.append( np.load( file_str +"ground_truth.npy" ) )
+            data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
+            teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
+            data_list.append( data.astype( np.float32 ) /255 )
+            teacher_list.append( data.astype( np.float32 ) /255 )
             
         shape = data_list[0].shape
         bt_data_size = ( 1, bt_size, shape[0], shape[1], shape[2] )
@@ -108,7 +112,7 @@ class BatchLoader:
             teacher[0,it,:,:,:] = teacher_list[it][self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
         torch_batch = Variable( torch.Tensor(batch) )
         torch_teacher = Variable( torch.Tensor(teacher) )
-        if self.is_cuda > -1:
+        if self.is_cuda is not None:
             torch_batch = torch_batch.cuda(self.is_cuda)
             torch_teacher = torch_teacher.cuda(self.is_cuda)
             
