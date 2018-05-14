@@ -62,7 +62,7 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
                 cut_it = int( round( batch.size()[4] /num_slices ) )
                 cut_id = 0
                 for jt in range( num_slices ):
-                    print( "   Slice: "  +str(jt) )
+                    print( "   " +str(it) +" Slice: "  +str(jt) )
                     start, end = cut_id, min( batch.size()[4], cut_it *(jt+1) )
                     start_t, end_t = start, min( teacher.size()[4], end -net.teacher_offset*2 )
                     cut_id = end
@@ -209,7 +209,8 @@ if __name__ == '__main__':
                             [(11,11,11),(5,5,5)]
                            ]
         network = __import__( "3-layer_conv_net" )
-        kernel_size_list = [[(3,3,3),(3,3,3),(3,3,3)]]
+        kernel_size_list = [[(3,3,3),(3,3,3),(3,3,3)], 
+                            [(5,5,5),(5,5,5),(3,3,3)]]
         num_kernels = (16,8)
         act_list = [#act.Sigmoid() 
                     (act.ReLU(),act.ReLU())
