@@ -120,59 +120,82 @@ def trainCascade( logging_path, loader, bt_size, eval_size, is_cuda, evle,
                       net, loss_func, optimizer, num_epochs, str_epochs, lr )
         cscd.getWeights( net )
                 
+def getArg( key, default = None ):
+    for it in range( 1, len(argv) )
+        parts = sys.argv[it].partition("=")
+        key_str = parts[0]
+        if key_str == key:
+            return parts[1]
+    return default
 
 def parseSysArgs():
-    args = []
-    if sys.argv[1] == "True": #feed forward
-        args.append( True )
-        if sys.argv[2] == "True": #use real data
-            args.append( True )
+    args = {}
+    ff = getArg("ff")
+    if ff is not None && ff == "True": #feed forward
+        args["ff"] = True
+        rd = getArg("rd")
+        if rd is not None && rd =="True"
+            args["rd"] = True
         else:
-            args.append( False )
-        args.append( sys.argv[3] +"/" ) #logging path
-        args.append( "epoch_" +sys.argv[4] +"/" ) #epoch
+            args["rd"] = False
+        path=getArg( "path" ) #logging path
+        args["path"]=path
+        args["epoch"]=getArg( "epoch", "" )
+        if args["epoch"] != ""
+            args["epoch"] = "epoch_" +args["epoch"]
+            
     else:
-        args.append( False )
-        if sys.argv[2] == "True": #init vals
-            args.append( True )
-            if sys.argv[3] == "True":
-                args.append( True )
+        args["ff"] = False
+        init = getArg("init")
+        if init is not None && init=="True": #init vals
+            args["init"] = True
+            csc = getArg( "csc" )
+            if csc is not None && csc=="True":
+                args["csc"] == "True"
             else:
-                args.append( False )
-                args.append( sys.argv[3] +"/" ) #logging path
-                args.append( "epoch_" +sys.argv[4] +"/" ) #epoch
-                args.append( int(sys.argv[5]) ) #starting epoch
-                args.append( int(sys.argv[6]) ) #ending epoch
+                args["csc"] == "False"
+                path=getArg( "path" ) #logging path
+                args["path"]=path
+                args["init_epoch"]=getArg("epoch") #epoch
+                args["init_epoch_s"] = getArg( "epoch_s" ) #starting epoch
+                args["init_epoch_e"] = getArg( "epoch_e" ) #ending epoch
         else:
-            args.append( False )
+            args["init"] = False
+        args["lr"] = float( getArg( "lr", 0.0004 ) )
+        args["epochs"] = int( getArg( "epochs", 1200 ) )
+        args["w_gate_s"] = int( getArg( "w_gate_s", 500 ) )
+        args["w_gate_e"] = int( getArg( "w_gate_e", 900 ) )
+        args["per_batch"] = int( getArg( "per_batch", 10 ) )
+        args["slices"] = int(getArg( "slices", 1 ) )
+        args["device"] = getArg( "device", "cuda" )
     return args
 
 
 if __name__ == '__main__':
+    args = parseSysArgs()
     logging_path = "/home/work/horn/data/"
     input_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
     teacher_path = "../../Data/real_scans/Artificial/Teacher/"
     num_bts = 60
-    epochs = [ 500,900,1200 ]
-    lr = 0.0008
+    epochs = [ args["epochs"],args["w_gate_s"],args["w_gate_e"] ]
+    lr = args["lr"]
     evle = evl.F1Score()
-    is_cuda = torch.device('cuda')
-
-    args = parseSysArgs()
-    if args[0]:
+    is_cuda = torch.device(args["device"])
+    
+    if args["ff"]:
         network = __import__( "3-layer_conv_net" )
         #log_path = logging_path + "2018-04-30_061116" +"/"
-        log_path = logging_path + sys.argv[3] +"/"
+        log_path = logging_path + args["path"] +"/"
         log = logger.Log( log_path )
-        epoch_str = "epoch_" +sys.argv[4] +"/"
+        epoch_str = args["epoch"] +"/"
         weights = log.getWeights( epoch_str )
         net = network.Network( [(3,3,3),(3,3,3),(3,3,3)], (16,8), (act.ReLU(),act.ReLU()) )
         net.setWeights( weights )
-        net.cuda()
-        if args[1]:
+        net.cuda(is_cuda)
+        if args["rd"]:
             loader = data_loader.RealDataLoader( "../../Data/real_scans/Real MRI/Lupine_small/01_tiff_stack/", is_cuda )
             output = feedForward( net, loader, 0, 1 )
-            log.visualizeOutputStack( output[0], args[3] )
+            log.visualizeOutputStack( output[0], args["epoch"] )
             log.saveOutputAsNPY( output[0], epoch_str, resize=(256,256,128) )
             log.saveScatterPlot( output[0], epoch_str )
         else:
@@ -230,19 +253,19 @@ if __name__ == '__main__':
                         #w_init = init.kernel( ks_size[0][0] )
                         str_epoch = 1
                         loader = data_loader.BatchLoader( input_path, teacher_path, net.teacher_offset, num_bts, is_cuda )
-                        if args[1]:
-                            if not args[2]:
-                                log_path = logging_path +args[3]
+                        if args["init"]:
+                            if not ["csc"]:
+                                log_path = logging_path +args["path"] +"/"
                                 log = logger.Log( log_path )
-                                w_init = log.getWeights( args[4] )
+                                w_init = log.getWeights( args["init_epoch"] )
                                 w_init[0][0] = w_init[0][0] /4
                                 w_init[1][0] = w_init[1][0] /4
                                 w_init[0][1] = w_init[0][1] /4
                                 w_init[1][1] = w_init[1][1] /4
                                 #net.setWeight( w_init.fill16(), 1, False )
                                 net.setWeights( w_init )
-                                str_epoch = args[5]+1
-                                epochs[2] = args[6]
+                                str_epoch = args["init_epoch_s"]+1
+                                epochs[2] = args["init_epoch_w"]
                                 trainNetwork( logging_path, loader, 4, 1, is_cuda, evle,
                                               net, lss, opti, epochs[2], str_epoch, lr )
                             else:
@@ -255,8 +278,8 @@ if __name__ == '__main__':
                                           ([(11,11,11),(5,5,5)],16,act.ReLU()),
                                           ([(11,11,11),(5,5,5)],16,act.Sigmoid())]
                                 cscd = cascade.Network( stages )
-                                trainCascade( logging_path, loader, 4, 1, is_cuda, evle,
+                                trainCascade( logging_path, loader, args["per_batch"], 1, is_cuda, evle,
                                               cscd, lss, opti, epochs[2], str_epoch, lr )
                         else:
-                            trainNetwork( logging_path, loader, 4, 1, is_cuda, evle,
+                            trainNetwork( logging_path, loader, args["per_batch"], 1, is_cuda, evle,
                                               net, lss, opti, epochs[2], str_epoch, lr )
