@@ -32,7 +32,7 @@ def visualizeWeights( weight_list ):
         dpi = fig.get_dpi()
         fig.set_size_inches( max(layer[0].shape[2]*100,200)/dpi, ( layer[0].shape[1]* layer[0].shape[0]*85 +20)/dpi )
         n = int( (layer[0].shape[2] +1) /2 )
-        grid = gridspec.GridSpec( layer[0].shape[0] *layer[0].shape[1] *layer[0].shape[2] +n, 1, figure=fig )
+        grid = gridspec.GridSpec( layer[0].shape[0] *layer[0].shape[1] *layer[0].shape[2] +n, 1 )
         
         maxe = np.amax( layer[0] )
         mine = np.amin( layer[0] )
