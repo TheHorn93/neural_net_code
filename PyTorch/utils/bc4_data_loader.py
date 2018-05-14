@@ -123,9 +123,26 @@ class BatchLoader:
     def getTeacherNp( self, bt_nbr, bt_size, offset = 0 ):
         print( "Loading teacher " +str(bt_nbr) )
         
+        r_fac_rnd = np.array( [0,1,2,3] )
+        rot_rnd = np.array( [0,1,0,2] )
+        x_flip_rnd = np.array( [0,0,0,1] )
+        y_flip_rnd = np.array( [0,1,0,0] )
+        swap_rnd = np.array( [1,1,0,0] )
+        sc_id = np.array( [0,0,0,0] )
+        c_id = np.array( [0,1,0,2] )
+        
         teacher_list = []
         for it in range( bt_size ):
-            teacher_list.append( np.load( self.teacher_path +getFilename( it ) ) )
+            file_str = ( self.input_path +self.r_fac_dic[r_fac_rnd[it]]
+                         +self.rot_dic[rot_rnd[it]]
+                         +self.x_flip_dic[x_flip_rnd[it]]
+                         +self.y_flip_dic[y_flip_rnd[it]]
+                         +self.swap_dic[swap_rnd[it]]
+                         +"256x256x128/"
+                        )
+            print( str(it) +": " + file_str )
+            teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
+            teacher_list.append( teacher.astype(np.float32) /255 )
             
         shape = teacher_list[0].shape
         teacher_data_size = ( 1, bt_size, shape[0]-offset*2, shape[1]-offset*2, shape[2]-offset*2 )
