@@ -175,5 +175,3 @@ class RealDataLoader:
         output /= 255
         return output
  
-loader = BatchLoader( "stub/", "stub/", 2, 25, 0 )
-loader.getBatch(0,4)

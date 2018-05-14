@@ -13,7 +13,7 @@ sys.path.insert( 1, 'utils/' )
 import losses
 import optimizer as opt
 import logger
-import data_loader
+import bc4_data_loader
 import acc_funcs as act
 import evaluator as evl
 import init_kernels as init
@@ -146,8 +146,8 @@ def parseSysArgs():
 
 
 if __name__ == '__main__':
-    logging_path = "../../Data/logs/"
-    input_path = "../../Data/real_scans/Artificial/Gauss+Perlin+Uniform/"
+    logging_path = "/home/work/horn/Data/"
+    input_path = "/home/work/uzman/manual_reconstruction"
     teacher_path = "../../Data/real_scans/Artificial/Teacher/"
     num_bts = 60
     epochs = [ 500,900,1200 ]
