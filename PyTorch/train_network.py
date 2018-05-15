@@ -177,7 +177,7 @@ if __name__ == '__main__':
     input_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
     teacher_path = "../../Data/real_scans/Artificial/Teacher/"
     num_bts = 60
-    epochs = [ args["epochs"],args["w_gate_s"],args["w_gate_e"] ]
+    epochs = [ args["w_gate_s"],args["w_gate_e"],args["epochs"] ]
     lr = args["lr"]
     evle = evl.F1Score()
     is_cuda = torch.device(args["device"])
