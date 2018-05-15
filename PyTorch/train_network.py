@@ -81,8 +81,8 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
                     tr_soil_loss += soil_loss
                 
         #Eval
-        output = net( batch[:,3,:,:,:].unsqueeze(1) )
-        loss, _, _ = loss_func( output, teacher[:,3,:,:,:].unsqueeze(1), epoch )
+        output = net( batch[:,bt_size -1,:,:,:].unsqueeze(1) )
+        loss, _, _ = loss_func( output, teacher[:,bt_size -1,:,:,:].unsqueeze(1), epoch )
             
         ev_loss += loss
            
@@ -90,8 +90,8 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
         tr_soil_loss /= ( bt_size -eval_size ) *bt_per_it *num_slices
         opt.step()
 
-        print( tr_loss.cpu().data.numpy() )
-        print( ev_loss.cpu().data.numpy() )
+        print( "Train Loss: " +str( tr_loss.cpu().data.numpy() ) )
+        print( "Test Loss: " +str( ev_loss.cpu().data.numpy() ) )
         
         #Log
         log.logEpoch( epoch, tr_loss.cpu().data.numpy(), ev_loss.cpu().data.numpy(), tr_root_loss.cpu().data.numpy(), tr_soil_loss.cpu().data.numpy() )
@@ -121,36 +121,36 @@ def trainCascade( logging_path, loader, bt_size, eval_size, is_cuda, evle,
         cscd.getWeights( net )
                 
 def getArg( key, default = None ):
-    for it in range( 1, len(argv) )
+    for it in range( 1, len(sys.argv) ):
         parts = sys.argv[it].partition("=")
         key_str = parts[0]
         if key_str == key:
-            return parts[1]
+            return parts[2]
     return default
 
 def parseSysArgs():
     args = {}
     ff = getArg("ff")
-    if ff is not None && ff == "True": #feed forward
+    if ff is not None and ff == "True": #feed forward
         args["ff"] = True
         rd = getArg("rd")
-        if rd is not None && rd =="True"
+        if rd is not None and rd =="True":
             args["rd"] = True
         else:
             args["rd"] = False
         path=getArg( "path" ) #logging path
         args["path"]=path
         args["epoch"]=getArg( "epoch", "" )
-        if args["epoch"] != ""
+        if args["epoch"] != "":
             args["epoch"] = "epoch_" +args["epoch"]
             
     else:
         args["ff"] = False
         init = getArg("init")
-        if init is not None && init=="True": #init vals
+        if init is not None and init=="True": #init vals
             args["init"] = True
             csc = getArg( "csc" )
-            if csc is not None && csc=="True":
+            if csc is not None and csc=="True":
                 args["csc"] == "True"
             else:
                 args["csc"] == "False"
@@ -236,7 +236,12 @@ if __name__ == '__main__':
                            ]
         network = __import__( "3-layer_conv_net" )
         kernel_size_list = [[(3,3,3),(3,3,3),(3,3,3)], 
-                            [(5,5,5),(5,5,5),(3,3,3)]]
+                            [(5,5,5),(3,3,3),(3,3,3)],
+                            [(5,5,5),(5,5,5),(3,3,3)],
+                            [(5,5,5),(5,5,5),(5,5,5)],
+                            [(7,7,7),(3,3,3),(3,3,3)],
+                            [(7,7,7),(5,5,5),(3,3,3)],
+                            [(7,7,7),(5,5,5),(5,5,5)]]
         num_kernels = (16,8)
         act_list = [#act.Sigmoid() 
                     (act.ReLU(),act.ReLU())

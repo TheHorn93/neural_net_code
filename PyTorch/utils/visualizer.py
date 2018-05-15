@@ -112,14 +112,14 @@ def visualizeOutput( input_data, output_path, axis=2, invert=False ):
         
  
 def getCombinedSlice( input_data, start, thickness ): 
-    dim1 = input_data.shape[0]
-    dim2 = input_data.shape[1]
+    dim1 = input_data.shape[1]
+    dim2 = input_data.shape[2]
     output_slice = np.zeros( [dim1,dim2] )
     #it_scale = 1 / thickness
     for it in range( start, start + thickness ):
         #scale = it_scale * ( start + thickness - it )
         #output_slice = output_slice + ( input_data[it,:,:] * scale )
-        output_slice = np.maximum( output_slice, input_data[:,:,it] )
+        output_slice = np.maximum( output_slice, input_data[it,:,:] )
     return output_slice
 
        
@@ -127,7 +127,7 @@ def multiOutput4( input_batch ):
     fig, ( l1, l2, l3, l4 ) = plt.subplots( 1,4 )
     dpi = fig.get_dpi()
     fig.set_size_inches( 1000/dpi, 500/dpi )
-    thickness = input_batch[0].shape[4] -1 
+    thickness = input_batch[0].shape[2] -1 
     #print(thickness)
     l1.imshow( getCombinedSlice( input_batch[0][0,0,:,:,:], 0, thickness ), cmap="Greys", vmin=0.0, vmax=1.0 )
     l2.imshow( getCombinedSlice( input_batch[1][0,0,:,:,:], 0, thickness ), cmap="Greys", vmin=0.0, vmax=1.0 )
