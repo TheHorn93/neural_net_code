@@ -131,7 +131,7 @@ def getArg( key, default = None ):
 def parseSysArgs():
     args = {}
     ff = getArg("ff")
-    if ff is not None and ff == "True": #feed forward
+    if ff == "True": #feed forward
         args["ff"] = True
         rd = getArg("rd")
         if rd is not None and rd =="True":
@@ -167,7 +167,7 @@ def parseSysArgs():
         args["w_gate_e"] = int( getArg( "w_gate_e", 900 ) )
         args["per_batch"] = int( getArg( "per_batch", 10 ) )
         args["slices"] = int(getArg( "slices", 1 ) )
-        args["device"] = getArg( "device", "cuda" )
+    args["device"] = getArg( "device", "cuda" )
     return args
 
 
@@ -176,10 +176,8 @@ if __name__ == '__main__':
     logging_path = "/home/work/horn/data/"
     input_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
     teacher_path = "../../Data/real_scans/Artificial/Teacher/"
+    real_scan_path = "/home/work/uzman/Real_MRI/Lupine_small/01_tiff_stack/"
     num_bts = 60
-    epochs = [ args["w_gate_s"],args["w_gate_e"],args["epochs"] ]
-    lr = args["lr"]
-    evle = evl.F1Score()
     is_cuda = torch.device(args["device"])
     
     if args["ff"]:
@@ -189,11 +187,11 @@ if __name__ == '__main__':
         log = logger.Log( log_path )
         epoch_str = args["epoch"] +"/"
         weights = log.getWeights( epoch_str )
-        net = network.Network( [(3,3,3),(3,3,3),(3,3,3)], (16,8), (act.ReLU(),act.ReLU()) )
+        net = network.Network( [(7,7,7),(5,5,5),(5,5,5)], (16,8), (act.ReLU(),act.ReLU()) )
         net.setWeights( weights )
         net.cuda(is_cuda)
         if args["rd"]:
-            loader = data_loader.RealDataLoader( "../../Data/real_scans/Real MRI/Lupine_small/01_tiff_stack/", is_cuda )
+            loader = data_loader.RealDataLoader( real_scan_path , is_cuda )
             output = feedForward( net, loader, 0, 1 )
             log.visualizeOutputStack( output[0], args["epoch"] )
             log.saveOutputAsNPY( output[0], epoch_str, resize=(256,256,128) )
@@ -235,6 +233,9 @@ if __name__ == '__main__':
                             [(11,11,11),(5,5,5)]
                            ]
         network = __import__( "3-layer_conv_net" )
+        epochs = [ args["w_gate_s"],args["w_gate_e"],args["epochs"] ]
+        lr = args["lr"]
+        evle = evl.F1Score()
         kernel_size_list = [[(3,3,3),(3,3,3),(3,3,3)], 
                             [(5,5,5),(3,3,3),(3,3,3)],
                             [(5,5,5),(5,5,5),(3,3,3)],

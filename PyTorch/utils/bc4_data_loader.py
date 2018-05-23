@@ -80,7 +80,7 @@ class BatchLoader:
         x_flip_rnd = np.random.randint( 2, size=bt_size )
         y_flip_rnd = np.random.randint( 2, size=bt_size )
         swap_rnd = np.random.randint( 2, size=bt_size )
-        sc_id = np.random.randint( 10, size=bt_size )
+        sc_id = np.random.randint( 5, size=bt_size )
         c_id = np.random.randint( 3, size=bt_size )
         print( "Loading from batches: " )
         
@@ -98,7 +98,7 @@ class BatchLoader:
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
             teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
             data_list.append( data.astype( np.float32 ) /255 )
-            teacher_list.append( data.astype( np.float32 ) /255 )
+            teacher_list.append( teacher.astype( np.float32 ) /255 )
             
         shape = data_list[0].shape
         bt_data_size = ( 1, bt_size, shape[0], shape[1], shape[2] )
@@ -178,7 +178,7 @@ class RealDataLoader:
         output /= 255
         print( str( np.amin(output) ) + "<" + str( np.amax(output) ) )
         output = Variable( torch.Tensor( output ) )
-        if self.is_cuda > -1:
+        if self.is_cuda is not None:
             output = output.cuda(self.is_cuda)
         return output, Variable( torch.Tensor([]) )
     
