@@ -42,7 +42,7 @@ class Logger:
         log_file.close()
         
         
-    def logMilestone( self, epoch, weight_list, output ):
+    def logMilestone( self, epoch, weight_list, output, train_err, f1_root, f1_soil ):
         folder_path = "epoch_" +str(epoch) +"/"
         os.mkdir( self.folder_path +folder_path )
         self.logWeights( weight_list, folder_path )
@@ -50,6 +50,7 @@ class Logger:
         fig.savefig( self.folder_path +folder_path + "output.png" )
         image = visualizer.getRawImage( fig, True )
         self.vis.image( image, win="output", opts=dict(title="Output") )
+        self.logEndResults( train_err, f1_root, f1_soil, folder_path )
     
     def logEpoch( self, epoch, train_err, eval_err, root_loss, soil_loss ):
         ep = np.array([epoch])
@@ -95,8 +96,13 @@ class Logger:
             image = visualizer.getRawImage( figs[it], True )
             self.vis.image( image, win="weights_"+str(it), opts=dict(title="Layer " +str(it)) )
             figs[it].clear()
-                
-           
+
+    def logEndResults( self, train_loss, f1_root, f1_soil, path="" ):
+        file = open( self.folder_path +path +"final_result.txt", "a" )
+        file.write( "Train Loss: " +str( train_loss ) +"\n" )
+        file.write( "F1 Root: " +str(f1_root[0]) + ", Recall: " +str(f1_root[1]) +", Precision: " +str(f1_root[2]) +"\n")
+        file.write( "F1 Soil: " +str(f1_soil[0]) + ", Recall: " +str(f1_soil[1]) +", Precision: " +str(f1_soil[2]) +"\n")
+                           
 
 class Log:
     def __init__( self, log_path ):

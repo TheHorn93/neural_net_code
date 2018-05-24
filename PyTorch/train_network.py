@@ -21,7 +21,7 @@ import time
 import torch
 
 def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
-    batch, _ = loader.getBatch( bt_nbr, bt_size )
+    batch, _ = loader.getDefaultBatch( bt_nbr, bt_size )
     out_list = []
     for it in range( bt_size ):
         input_data = batch[:,it,:,:,:].unsqueeze(1)
@@ -108,7 +108,7 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
             log.logF1Root( epoch, f1_r /4 )
             log.logF1Soil( epoch, f1_s /4 )
             if( epoch %100 == 0 ): 
-                log.logMilestone( epoch, weights, output )
+                log.logMilestone( epoch, weights, output, tr_loss, f1_r, f1_s )
 
 
 def trainCascade( logging_path, loader, bt_size, eval_size, is_cuda, evle, 
@@ -174,7 +174,7 @@ def parseSysArgs():
 if __name__ == '__main__':
     args = parseSysArgs()
     logging_path = "/home/work/horn/data/"
-    input_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
+    input_path = "/home/work/uzman/Real_MRI/manual-reconstruction/lupine_small_xml/"
     teacher_path = "../../Data/real_scans/Artificial/Teacher/"
     real_scan_path = "/home/work/uzman/Real_MRI/Lupine_small/01_tiff_stack/"
     num_bts = 60
