@@ -56,7 +56,7 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
         for bt_it in range( bt_per_it ):
             #Load Data
             #bt_nbr = np.random.randint( num_bts )
-            batch, teacher = loader.getBatchAndShuffle( bt_size )
+            batch, teacher = loader.getBatch( bt_size )
             
             for it in range( bt_size -eval_size ):
                 num_slices = 1
