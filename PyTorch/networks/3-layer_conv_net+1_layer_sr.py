@@ -43,7 +43,7 @@ class Network( nn.Module ):
         output = self.bt_norm2( self.activation2( self.conv2( output ) ) )
         offset = int(self.layer_offset[0] +self.layer_offset[1])
         output += input_data[:,:,offset:-offset,offset:-offset,offset:-offset]
-        output = self.bt_norm3( self.activation( self.conv3( output ) ) )
+        output = self.bt_norm3( self.activation3( self.conv3( output ) ) )
         output = self.upsample( output )
         output = self.bt_norm4( self.conv4( output ) )
         if( ff ):

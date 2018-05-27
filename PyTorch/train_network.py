@@ -163,7 +163,7 @@ def parseSysArgs():
             args["init"] = False
         if getArg( "sr", None ) is not None:
             args["sr"] = True
-        else 
+        else:
             args["sr"] = False
         args["lr"] = float( getArg( "lr", 0.0004 ) )
         args["epochs"] = int( getArg( "epochs", 1200 ) )
@@ -264,7 +264,7 @@ if __name__ == '__main__':
                                 #[(5,5,5),(5,5,5),(5,5,5)],
                                 [(7,7,7),(5,5,5),(5,5,5),(3,3,3)],
                                 [(7,7,7),(5,5,5),(5,5,5),(5,5,5)],
-                                [(7,7,7),(5,5,5),(5,5,5),(7,7,7))]]
+                                [(7,7,7),(5,5,5),(5,5,5),(7,7,7)]]
             num_kernels = (16,8)
             act_list = [#act.Sigmoid() 
                         (act.ReLU(),act.ReLU(),act.ReLU())
