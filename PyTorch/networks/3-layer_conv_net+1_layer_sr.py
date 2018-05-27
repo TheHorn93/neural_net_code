@@ -20,7 +20,7 @@ class Network( nn.Module ):
     
     def __init__( self, kernel_sizes, num_kernels, activation ):
         super( Network, self ).__init__()
-        self.teacher_offset = int( (kernel_sizes[0][0] -1) /2 +(kernel_sizes[1][0] -1) /2 +(kernel_sizes[2][0] -1) /2)
+        self.teacher_offset = int( (kernel_sizes[0][0] -1) /2 +(kernel_sizes[1][0] -1) /2 +(kernel_sizes[2][0] -1) /2) *2 +int( (kernel_sizes[3][0]-1) /2) 
         self.layer_offset = [(kernel_sizes[0][0] -1) /2, (kernel_sizes[1][0] -1) /2, +(kernel_sizes[2][0] -1) /2]
         self.kernel_sizes = []
         self.kernel_sizes.append( kernel_sizes[0] )

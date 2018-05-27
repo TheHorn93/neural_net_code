@@ -60,13 +60,16 @@ class BatchLoader:
             file_str = folder_str +"256x256x128/"
             print( str(it) +": " + file_str )
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
-            teacher = np.load( folder_str +"512x512x256.npy" )[:,0,:,:]
+            teacher = np.load( folder_str +"512x512x256.npy" )
+            teacher = np.swapaxes( teacher, 0, 1 )
+            teacher = np.swapaxes( teacher, 0, 2 )
             data_list.append( data.astype(np.float32) /255 )
             teacher_list.append( teacher.astype(np.float32) /255 )
             
         shape = data_list[0].shape
+        t_shape = teacher_list[0].shape
         bt_data_size = ( 1, bt_size, shape[0], shape[1], shape[2] )
-        teacher_data_size = ( 1, bt_size, shape[0] -int(self.offset*2), shape[1] -int(self.offset*2), shape[2] -int(self.offset*2) )
+        teacher_data_size = ( 1, bt_size, t_shape[0] -int(self.offset*2), t_shape[1] -int(self.offset*2), t_shape[2] -int(self.offset*2) )
 
         batch = np.empty( bt_data_size )
         teacher = np.empty( teacher_data_size )
