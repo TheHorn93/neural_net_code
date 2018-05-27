@@ -75,13 +75,13 @@ class BatchLoader:
     
     
     def getBatch( self, bt_size ):
-        r_fac_rnd = np.zeros( [bt_size] )
+        r_fac_rnd = np.zeros( [bt_size], dtype=np.int32 )
         rot_rnd = np.random.randint( 3, size=bt_size )
         x_flip_rnd = np.random.randint( 2, size=bt_size )
         y_flip_rnd = np.random.randint( 2, size=bt_size )
         swap_rnd = np.random.randint( 2, size=bt_size )
         sc_id = np.random.randint( 5, size=bt_size )
-        c_id = np.zeros( [bt_size] )
+        c_id = np.zeros( [bt_size], dtype=np.int32 )
         print( "Loading from batches: " )
         
         r_ct = 0
