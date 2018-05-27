@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon May 14 06:41:21 2018
+Created on Mon May 28 00:32:39 2018
 
-@author: JHorn
+@author: root
 """
 
 import torch
@@ -25,12 +26,16 @@ class Network( nn.Module ):
         self.kernel_sizes.append( kernel_sizes[0] )
         self.activation1 = activation[0]
         self.activation2 = activation[1]
+        self.activation3 = activation[2]
         self.conv1 = nn.Conv3d( 1, num_kernels[0], kernel_sizes[0] )
         self.bt_norm1 = nn.BatchNorm3d( num_kernels[0] )
         self.conv2 = nn.Conv3d( num_kernels[0], num_kernels[1], kernel_sizes[1] )
         self.bt_norm2 = nn.BatchNorm3d( num_kernels[1] )
         self.conv3 = nn.Conv3d( num_kernels[1], 1, kernel_sizes[2] )
         self.bt_norm3 = nn.BatchNorm3d( 1 )
+        self.upsample = nn.Upsample( scale_factor=2, mode='trilinear' )
+        self.conv4 = nn.Conv3d( 1, 1, kernel_sizes[2] )
+        self.bt_norm4 = nn.BatchNorm3d( 1 )
         
         
     def forward( self, input_data, ff=False ):
@@ -38,7 +43,9 @@ class Network( nn.Module ):
         output = self.bt_norm2( self.activation2( self.conv2( output ) ) )
         offset = int(self.layer_offset[0] +self.layer_offset[1])
         output += input_data[:,:,offset:-offset,offset:-offset,offset:-offset]
-        output = self.bt_norm3( self.conv3( output ) )
+        output = self.bt_norm3( self.activation( self.conv3( output ) ) )
+        output = self.upsample( output )
+        output = self.bt_norm4( self.conv4( output ) )
         if( ff ):
             output = funcs.sigmoid( output )
         return output
@@ -62,15 +69,18 @@ class Network( nn.Module ):
         weight_list = [(self.conv1.weight.data.numpy(), self.conv1.bias.data.numpy())]
         weight_list.append[(self.conv2.weight.data.numpy(), self.conv2.bias.data.numpy())]
         weight_list.append[(self.conv3.weight.data.numpy(), self.conv3.bias.data.numpy())]
-        weight_list.append((self.bt_norm1.weight.cpu().data.numpy(), self.bt_norm1.bias.cpu().data.numpy()))
-        weight_list.append((self.bt_norm2.weight.cpu().data.numpy(), self.bt_norm2.bias.cpu().data.numpy()))
-        weight_list.append((self.bt_norm3.weight.cpu().data.numpy(), self.bt_norm3.bias.cpu().data.numpy()))
+        weight_list.append[(self.conv4.weight.data.numpy(), self.conv4.bias.data.numpy())]
         return weight_list
     
     def getWeightsCuda( self ):
         weight_list = [(self.conv1.weight.cpu().data.numpy(), self.conv1.bias.cpu().data.numpy())]
         weight_list.append((self.conv2.weight.cpu().data.numpy(), self.conv2.bias.cpu().data.numpy()))
         weight_list.append((self.conv3.weight.cpu().data.numpy(), self.conv3.bias.cpu().data.numpy()))
+        weight_list.append((self.conv4.weight.cpu().data.numpy(), self.conv4.bias.cpu().data.numpy()))
+        weight_list.append((self.bt_norm1.weight.cpu().data.numpy(), self.bt_norm1.bias.cpu().data.numpy()))
+        weight_list.append((self.bt_norm2.weight.cpu().data.numpy(), self.bt_norm2.bias.cpu().data.numpy()))
+        weight_list.append((self.bt_norm3.weight.cpu().data.numpy(), self.bt_norm3.bias.cpu().data.numpy()))
+        weight_list.append((self.bt_norm4.weight.cpu().data.numpy(), self.bt_norm4.bias.cpu().data.numpy()))
         return weight_list
     
     def setWeights( self, weight_list ):
@@ -80,12 +90,17 @@ class Network( nn.Module ):
         self.conv2.bias = nn.Parameter( torch.Tensor( weight_list[1][1] ) )
         self.conv3.weight = nn.Parameter( torch.Tensor( weight_list[2][0] ) )
         self.conv3.bias = nn.Parameter( torch.Tensor( weight_list[2][1] ) )
-        self.bt_norm1.bias = nn.Parameter( torch.Tensor( weight_list[3][1] ) )
-        self.bt_norm1.weight = nn.Parameter( torch.Tensor( weight_list[3][0] ) )
-        self.bt_norm2.weight = nn.Parameter( torch.Tensor( weight_list[4][0] ) )
-        self.bt_norm2.bias = nn.Parameter( torch.Tensor( weight_list[4][1] ) )
-        self.bt_norm3.weight = nn.Parameter( torch.Tensor( weight_list[5][0] ) )
-        self.bt_norm3.bias = nn.Parameter( torch.Tensor( weight_list[5][1] ) )
+        self.conv4.weight = nn.Parameter( torch.Tensor( weight_list[3][0] ) )
+        self.conv4.bias = nn.Parameter( torch.Tensor( weight_list[3][1] ) )
+        self.conv4.weight = nn.Parameter( torch.Tensor( weight_list[3][0] ) )
+        self.bt_norm1.bias = nn.Parameter( torch.Tensor( weight_list[4][1] ) )
+        self.bt_norm1.weight = nn.Parameter( torch.Tensor( weight_list[4][0] ) )
+        self.bt_norm2.weight = nn.Parameter( torch.Tensor( weight_list[5][0] ) )
+        self.bt_norm2.bias = nn.Parameter( torch.Tensor( weight_list[5][1] ) )
+        self.bt_norm3.weight = nn.Parameter( torch.Tensor( weight_list[6][0] ) )
+        self.bt_norm3.bias = nn.Parameter( torch.Tensor( weight_list[6][1] ) )
+        self.bt_norm4.weight = nn.Parameter( torch.Tensor( weight_list[7][0] ) )
+        self.bt_norm4.bias = nn.Parameter( torch.Tensor( weight_list[7][1] ) )
         
     def setWeight( self, weight, it, has_bias ):
         if it == 1:

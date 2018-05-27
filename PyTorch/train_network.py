@@ -161,6 +161,10 @@ def parseSysArgs():
                 args["init_epoch_e"] = getArg( "epoch_e" ) #ending epoch
         else:
             args["init"] = False
+        if getArg( "sr", None ) is not None:
+            args["sr"] = True
+        else 
+            args["sr"] = False
         args["lr"] = float( getArg( "lr", 0.0004 ) )
         args["epochs"] = int( getArg( "epochs", 1200 ) )
         args["w_gate_s"] = int( getArg( "w_gate_s", 500 ) )
@@ -232,21 +236,39 @@ if __name__ == '__main__':
                             #[(9,9,9),(5,5,5)],
                             [(11,11,11),(5,5,5)]
                            ]
-        network = __import__( "3-layer_conv_net" )
-        epochs = [ args["w_gate_s"],args["w_gate_e"],args["epochs"] ]
-        lr = args["lr"]
-        evle = evl.F1Score()
-        kernel_size_list = [[(3,3,3),(3,3,3),(3,3,3)], 
-                            [(5,5,5),(3,3,3),(3,3,3)],
-                            [(5,5,5),(5,5,5),(3,3,3)],
-                            [(5,5,5),(5,5,5),(5,5,5)],
-                            [(7,7,7),(3,3,3),(3,3,3)],
-                            [(7,7,7),(5,5,5),(3,3,3)],
-                            [(7,7,7),(5,5,5),(5,5,5)]]
-        num_kernels = (16,8)
-        act_list = [#act.Sigmoid() 
-                    (act.ReLU(),act.ReLU())
-                   ]
+        
+        if( not args["sr"] ):
+            network = __import__( "3-layer_conv_net" )
+            epochs = [ args["w_gate_s"],args["w_gate_e"],args["epochs"] ]
+            lr = args["lr"]
+            evle = evl.F1Score()
+            kernel_size_list = [#[(3,3,3),(3,3,3),(3,3,3)], 
+                                #[(5,5,5),(3,3,3),(3,3,3)],
+                                #[(5,5,5),(5,5,5),(3,3,3)],
+                                #[(5,5,5),(5,5,5),(5,5,5)],
+                                [(7,7,7),(3,3,3),(3,3,3)],
+                                [(7,7,7),(5,5,5),(3,3,3)],
+                                [(7,7,7),(5,5,5),(5,5,5)]]
+            num_kernels = (16,8)
+            act_list = [#act.Sigmoid() 
+                        (act.ReLU(),act.ReLU())
+                       ]
+        else:
+            network = __import__( "3-layer_conv_net+1_layer_sr" )
+            epochs = [ args["w_gate_s"],args["w_gate_e"],args["epochs"] ]
+            lr = args["lr"]
+            evle = evl.F1Score()
+            kernel_size_list = [#[(3,3,3),(3,3,3),(3,3,3)], 
+                                #[(5,5,5),(3,3,3),(3,3,3)],
+                                #[(5,5,5),(5,5,5),(3,3,3)],
+                                #[(5,5,5),(5,5,5),(5,5,5)],
+                                [(7,7,7),(5,5,5),(5,5,5),(3,3,3)],
+                                [(7,7,7),(5,5,5),(5,5,5),(5,5,5)],
+                                [(7,7,7),(5,5,5),(5,5,5),(7,7,7))]]
+            num_kernels = (16,8)
+            act_list = [#act.Sigmoid() 
+                        (act.ReLU(),act.ReLU(),act.ReLU())
+                       ]
         loss_list = [losses.CrossEntropyDynamic(epochs[0],epochs[1])
                      #,losses.NegativeLogLikelihood(1500)
                     ]
