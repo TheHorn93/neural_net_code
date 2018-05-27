@@ -32,7 +32,7 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
         
 
 def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle, 
-                  net, loss_func, optimizer, num_epochs, str_epochs, lr, arg_list=[] ):
+                  net, loss_func, optimizer, num_epochs, str_epochs, lr, ups, arg_list=[] ):
     if is_cuda is not None:
         net.cuda( is_cuda )
     
@@ -56,7 +56,10 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
         for bt_it in range( bt_per_it ):
             #Load Data
             #bt_nbr = np.random.randint( num_bts )
-            batch, teacher = loader.getBatch( bt_size )
+            if not ups:
+                batch, teacher = loader.getBatch( bt_size )
+            else:
+                batch, teacher = loader.getBatchAndUpsampledGT( bt_size )
             
             for it in range( bt_size -eval_size ):
                 num_slices = 1
@@ -238,6 +241,7 @@ if __name__ == '__main__':
                            ]
         
         if( not args["sr"] ):
+            ups = False
             network = __import__( "3-layer_conv_net" )
             epochs = [ args["w_gate_s"],args["w_gate_e"],args["epochs"] ]
             lr = args["lr"]
@@ -254,6 +258,7 @@ if __name__ == '__main__':
                         (act.ReLU(),act.ReLU())
                        ]
         else:
+            ups = True
             network = __import__( "3-layer_conv_net+1_layer_sr" )
             epochs = [ args["w_gate_s"],args["w_gate_e"],args["epochs"] ]
             lr = args["lr"]
@@ -310,4 +315,4 @@ if __name__ == '__main__':
                                               cscd, lss, opti, epochs[2], str_epoch, lr )
                         else:
                             trainNetwork( logging_path, loader, args["per_batch"], 1, is_cuda, evle,
-                                              net, lss, opti, epochs[2], str_epoch, lr )
+                                              net, lss, opti, epochs[2], str_epoch, lr, ups )
