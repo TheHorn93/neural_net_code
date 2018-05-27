@@ -26,16 +26,19 @@ class Network( nn.Module ):
         self.activation1 = activation[0]
         self.activation2 = activation[1]
         self.conv1 = nn.Conv3d( 1, num_kernels[0], kernel_sizes[0] )
+        self.bt_norm1 = nn.BatchNorm3d( num_kernels[0] )
         self.conv2 = nn.Conv3d( num_kernels[0], num_kernels[1], kernel_sizes[1] )
+        self.bt_norm2 = nn.BatchNorm3d( num_kernels[1] )
         self.conv3 = nn.Conv3d( num_kernels[1], 1, kernel_sizes[2] )
+        self.bt_norm3 = nn.BatchNorm3d( 1 )
         
         
     def forward( self, input_data, ff=False ):
-        output = self.activation1( self.conv1( input_data ) )
-        output = self.activation2( self.conv2( output ) )
+        output = self.bt_norm1( self.activation1( self.conv1( input_data ) ) )
+        output = self.bt_norm2( self.activation2( self.conv2( output ) ) )
         offset = int(self.layer_offset[0] +self.layer_offset[1])
         output += input_data[:,:,offset:-offset,offset:-offset,offset:-offset]
-        output = self.conv3( output )
+        output = self.bt_norm3( self.conv3( output ) )
         if( ff ):
             output = funcs.sigmoid( output )
         return output
