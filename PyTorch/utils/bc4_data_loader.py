@@ -61,8 +61,7 @@ class BatchLoader:
             print( str(it) +": " + file_str )
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
             teacher = np.load( folder_str +"512x512x256.npy" )
-            teacher = np.swapaxes( teacher, 0, 1 )
-            teacher = np.swapaxes( teacher, 0, 2 )
+            teacher = np.moveaxis( teacher, 2, 0 )
             data_list.append( data.astype(np.float32) /255 )
             teacher_list.append( teacher.astype(np.float32) /255 )
             
@@ -77,12 +76,14 @@ class BatchLoader:
         for it in range( bt_size ):
             batch[0,it,:,:,:] = data_list[it]
             teacher[0,it,:,:,:] = teacher_list[it][self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
+    
         torch_batch = Variable( torch.Tensor(batch) )
         torch_teacher = Variable( torch.Tensor(teacher) )
         if self.is_cuda is not None:
             torch_batch = torch_batch.cuda(self.is_cuda)
             torch_teacher = torch_teacher.cuda(self.is_cuda)
             
+        print( "Batch: " +str(torch_teacher.size()) )
         return torch_batch, torch_teacher        
         
     def getDefaultBatch( self, bt_nbr, bt_size ):

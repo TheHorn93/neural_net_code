@@ -20,8 +20,10 @@ class Network( nn.Module ):
     
     def __init__( self, kernel_sizes, num_kernels, activation ):
         super( Network, self ).__init__()
-        self.teacher_offset = int( (kernel_sizes[0][0] -1) /2 +(kernel_sizes[1][0] -1) /2 +(kernel_sizes[2][0] -1) /2) *2 +int( (kernel_sizes[3][0]-1) /2) 
+        self.offset = int( (kernel_sizes[0][0] -1) /2 +(kernel_sizes[1][0] -1) /2 +(kernel_sizes[2][0] -1) /2) *2
         self.layer_offset = [(kernel_sizes[0][0] -1) /2, (kernel_sizes[1][0] -1) /2, +(kernel_sizes[2][0] -1) /2]
+        self.sl_offset = self.offset *2 + int( ( kernel_sizes[3][0] -1 ) /2 )
+        self.teacher_offset = self.offset +int( (kernel_sizes[3][0] -1)/2 )
         self.kernel_sizes = []
         self.kernel_sizes.append( kernel_sizes[0] )
         self.activation1 = activation[0]
@@ -33,10 +35,9 @@ class Network( nn.Module ):
         self.bt_norm2 = nn.BatchNorm3d( num_kernels[1] )
         self.conv3 = nn.Conv3d( num_kernels[1], 1, kernel_sizes[2] )
         self.bt_norm3 = nn.BatchNorm3d( 1 )
-        self.upsample = nn.Upsample( scale_factor=2, mode='trilinear' )
-        self.conv4 = nn.Conv3d( 1, 1, kernel_sizes[2] )
+        self.ups = nn.Upsample( scale_factor=2, mode='trilinear' )
+        self.conv4 = nn.Conv3d( 1,1,kernel_sizes[3] )
         self.bt_norm4 = nn.BatchNorm3d( 1 )
-        
         
     def forward( self, input_data, ff=False ):
         output = self.bt_norm1( self.activation1( self.conv1( input_data ) ) )
@@ -44,7 +45,7 @@ class Network( nn.Module ):
         offset = int(self.layer_offset[0] +self.layer_offset[1])
         output += input_data[:,:,offset:-offset,offset:-offset,offset:-offset]
         output = self.bt_norm3( self.activation3( self.conv3( output ) ) )
-        output = self.upsample( output )
+        output = self.ups( output )
         output = self.bt_norm4( self.conv4( output ) )
         if( ff ):
             output = funcs.sigmoid( output )

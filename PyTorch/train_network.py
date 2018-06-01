@@ -32,7 +32,7 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
         
 
 def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle, 
-                  net, loss_func, optimizer, num_epochs, str_epochs, lr, ups, arg_list=[] ):
+                  net, loss_func, optimizer, num_epochs, str_epochs, lr, ups, num_slices, arg_list=[] ):
     if is_cuda is not None:
         net.cuda( is_cuda )
     
@@ -58,30 +58,38 @@ def trainNetwork( logging_path, loader, bt_size, eval_size, is_cuda, evle,
             #bt_nbr = np.random.randint( num_bts )
             if not ups:
                 batch, teacher = loader.getBatch( bt_size )
+                offset_dif = int( ( batch.size()[4] -teacher.size()[4] ) /2 )
             else:
                 batch, teacher = loader.getBatchAndUpsampledGT( bt_size )
-            
+                offset_dif = int( ( batch.size()[4] -teacher.size()[4] /2 ) /2 )
+                #batch, teacher = loader.getBatch( bt_size )
+
             for it in range( bt_size -eval_size ):
-                num_slices = 1
-                cut_it = int( round( batch.size()[4] /num_slices ) )
-                cut_id = 0
+                cut_offset = net.sl_offset
+                cut_it = int( round( ( batch.size()[4] -offset_dif*2) /num_slices ) )
+                cut_it_t = int( round( teacher.size()[4] /num_slices ) )
+                cut_id_t = 0
+                cut_id = offset_dif
                 for jt in range( num_slices ):
                     print( "   " +str(it) +" Slice: "  +str(jt) )
-                    start, end = cut_id, min( batch.size()[4], cut_it *(jt+1) )
-                    start_t, end_t = start, min( teacher.size()[4], end -net.teacher_offset*2 )
+                    start_t, end_t = cut_id_t, min( teacher.size()[4], cut_it_t *(jt+1) )
+                    start = cut_id
+                    end =  min( batch.size()[4], cut_it +start)
+                    cut_id_t = end_t
                     cut_id = end
-                    input_data = batch[:,it,:,:,start:end].unsqueeze(1)
+                    input_data = batch[:,it,:,:,start-offset_dif:end+offset_dif].unsqueeze(1)
                     teacher_data = teacher[:,it,:,:,start_t:end_t].unsqueeze(1)
                     
                     #Train
                     output = net( input_data, loss_func.apply_sigmoid )
                     loss, root_loss, soil_loss = loss_func( output, teacher_data, epoch )
                     loss /=( bt_size -eval_size ) *bt_per_it *num_slices
-                    loss.backward()
                     
                     tr_loss += loss
-                    tr_root_loss += root_loss
-                    tr_soil_loss += soil_loss
+                    loss.backward()
+
+                tr_root_loss += root_loss
+                tr_soil_loss += soil_loss
                 
         #Eval
         output = net( batch[:,bt_size -1,:,:,:].unsqueeze(1) )
@@ -267,8 +275,8 @@ if __name__ == '__main__':
                                 #[(5,5,5),(3,3,3),(3,3,3)],
                                 #[(5,5,5),(5,5,5),(3,3,3)],
                                 #[(5,5,5),(5,5,5),(5,5,5)],
-                                [(7,7,7),(5,5,5),(5,5,5),(3,3,3)],
                                 [(7,7,7),(5,5,5),(5,5,5),(5,5,5)],
+                                [(7,7,7),(5,5,5),(5,5,5),(3,3,3)],
                                 [(7,7,7),(5,5,5),(5,5,5),(7,7,7)]]
             num_kernels = (16,8)
             act_list = [#act.Sigmoid() 
@@ -315,4 +323,4 @@ if __name__ == '__main__':
                                               cscd, lss, opti, epochs[2], str_epoch, lr )
                         else:
                             trainNetwork( logging_path, loader, args["per_batch"], 1, is_cuda, evle,
-                                              net, lss, opti, epochs[2], str_epoch, lr, ups )
+                                              net, lss, opti, epochs[2], str_epoch, lr, ups, args["slices"] )
