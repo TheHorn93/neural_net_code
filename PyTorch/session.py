@@ -8,6 +8,7 @@ Created on Mon May 28 15:12:43 2018
 
 import sys
 import torch
+import curses
 
 #sys.path.insert(0,"/home/work/horn/code/neural_net_code/PyTorch/networks/")
 sys.path.insert(0,"./networks/")
@@ -45,7 +46,7 @@ class Instance:
     def __init__( self, network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates=(None,None) ):
         self.proto_set = self.ProtoInstance( network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates )
         
-    def __call__( self, device ):
+    def __call__( self, stdscr, device ):
         print( "Creating training instance" )
         self.parseArgs( self.proto_set.loss, self.proto_set.opt, self.proto_set.epochs, self.proto_set.data, self.proto_set.epoch_gates )
         self.lr = self.proto_set.lr
@@ -60,7 +61,7 @@ class Instance:
             self.loaders.append( data_loader.BatchLoader( input_path +data_str, self.net.teacher_offset, device ) )
         if device is not None:
             self.net.cuda( device )
-        training.training( self.log, self.net, self.loaders, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
+        training.training( stdscr, self.log, self.net, self.loaders, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
                      
     def parseArgs( self, loss, opt, epochs, data, epoch_gates=(None,None) ):
         if loss == "cross_entropy":
@@ -85,7 +86,8 @@ class Instance:
 
 class Session:
     
-    def __init__( self, inp=sys.argv ):
+    def __init__( self, inp, stdscr ):
+        self.screen = stdscr
         parser = arg_parser.SessionArgumentParser() 
         args = parser( inp )
         self.device = args.device[0]
@@ -140,7 +142,12 @@ class Session:
     def runSession( self ):
         print( "Starting Session: " )
         for instance in self.instances:
-            instance( torch.device( self.device ) )
-            
-ses = Session( ["train"] )
-ses()
+            instance( self.screen, torch.device( self.device ) )
+  
+
+def main( stdscr ):
+    ses = Session( sys.argv[1:], stdscr )
+    ses()    
+    
+if __name__ == '__main__':
+    curses.wrapper( main )

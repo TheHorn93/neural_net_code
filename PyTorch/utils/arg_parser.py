@@ -88,5 +88,5 @@ class NetworkParser():
     def __call__( self, inp ):
         return self.net_parser.parse_args( inp )
         
-par = NetworkParser()
-print( par( "-l 5 8 relu -l 5 1 sigmoid bt".split() ) )
+#par = NetworkParser()
+#print( par( "-l 5 8 relu -l 5 1 sigmoid bt".split() ) )
