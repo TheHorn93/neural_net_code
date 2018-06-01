@@ -19,7 +19,8 @@ class Network( nn.Module ):
             if bt_norm:
                 self.ops.append( nn.BatchNorm3d( num_kernels[0] ) )
             self.ops.append( nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) ) )
-            self.ops.append( activation )
+            if activation is not None:
+                self.ops.append( activation )
             
         def __call__( self, inp, res_inp=0 ):
             output = inp
@@ -85,6 +86,7 @@ class Network( nn.Module ):
         print( "Creating network: " +self.model )
         self.parseArgs( arg_list )
         self.teacher_offset = 0
+        self.ups = False
         for offs in self.offset_list:
             self.teacher_offset += offs
         print( "Created network" )
@@ -121,6 +123,8 @@ class Network( nn.Module ):
             return funcs.sigmoid
         elif act_string == "tanh":
             return funcs.tanh
+        elif act_string == "sigmoid_out":
+            return None
     
     
     def getStructure( self ):
@@ -140,8 +144,10 @@ class Network( nn.Module ):
             self.setLayer( l_it, weight_list[l_it] )
 
 
-    def forward( self, inp ):
+    def forward( self, inp, ff=False ):
         output = inp
         for layer in self.layers:
             output = layer( output )
+        if( ff ):
+            output = funcs.sigmoid( output )
         return output
