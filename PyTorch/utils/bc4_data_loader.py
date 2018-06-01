@@ -15,11 +15,10 @@ def getFilename( n, c ):
 
 class BatchLoader:
     
-    def __init__( self, input_path, teacher_path, offset, num_bts, is_cuda = -1 ):
+    def __init__( self, input_path, offset, is_cuda = -1 ):
         self.input_path = input_path
         #self.teacher_path = teacher_path
         self.offset = int(offset)
-        self.num_bts = num_bts
         self.is_cuda = is_cuda
         self.r_fac_dic = ["r_factor_0.34/","r_factor_0.71/","r_factor_1.00/","r_factor_1.41/"]
         self.rot_dic = ["rot_0/","rot_60/","rot_120/"]

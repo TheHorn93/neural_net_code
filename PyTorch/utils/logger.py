@@ -7,9 +7,32 @@ Created on Wed Apr  4 19:52:03 2018
 
 import os
 import time
+import visualizer
 import visdom
 import numpy as np
-import visualizer
+
+class DummyLogger:
+    def __init__( self, path ):
+        pass
+    
+    def masterLog( self, structure, instance ):
+        pass
+    
+    def logMilestone( self, epoch, weight_list, output, train_err, f1_root, f1_soil ):
+        pass
+    
+    def logEpoch( self, epoch, train_err, eval_err, root_loss, soil_loss ):
+        pass
+    
+    def logF1Root( self, epoch, f1_t ):
+        pass
+    
+    def logF1Soil( self, epoch, f1_s ):
+        pass
+
+    def logWeights( self, weight_list, path="" ):
+        pass
+    
 
 class Logger:
     
@@ -33,13 +56,15 @@ class Logger:
         self.pre_score_s = self.vis.line(np.array([0]), win="pre_score_s", opts=dict(title="Precision Soil"))
         print( "Visdom instantiated" )
         
-        
-    def masterLog( self, structure, loss, optimizer, lr ):
-        output = structure +"\n Loss: " + str( loss ) +"\n Optimizer: " +str( optimizer ) +"\n Learning rate: " +str(lr)
-        self.vis.text( output, win="structure" )
-        log_file = open( self.folder_path + "model.txt", "a" )
-        log_file.write( output )
-        log_file.close()
+    
+    def masterLog( self, structure, instance ):
+        self.vis.text( structure, win="structure" )
+        str_file = open( self.folder_path + "model.txt", "a" )
+        str_file.write( structure )
+        str_file.close()
+        ins_file = open( self.folder_path + "instance.txt", "a" )
+        ins_file.write( instance )
+        ins_file.close()
         
         
     def logMilestone( self, epoch, weight_list, output, train_err, f1_root, f1_soil ):
@@ -85,8 +110,11 @@ class Logger:
             log_path += '/'
             
         for it in range( len( weight_list ) ):
-            np.save( log_path +"weights_" +str(it), weight_list[it][0] )
-            np.save( log_path +"bias_" +str(it), weight_list[it][1] )
+            np.save( log_path +str(it) +"_weights" , weight_list[it][0] )
+            np.save( log_path +str(it) +"_bias", weight_list[it][1] )
+            if( len( weight_list[it] ) == 4 ):
+                np.save( log_path +str(it) +"_bn_weights" , weight_list[it][2] )
+                np.save( log_path +str(it) +"_bn_bias" , weight_list[it][3] )
             
     def visualizeWeights( self, weight_list, path="" ):
         log_path = self.folder_path +path
@@ -114,13 +142,19 @@ class Log:
         it = 0
         weight_list = []
         while True:
-            w_file = w_path + "weights_" +str(it) +".npy"
-            b_file = w_path + "bias_" +str(it) +".npy"
+            w_file = w_path + str(it) +"_weights" +".npy"
+            b_file = w_path + str(it) +"_bias" +".npy"
+            bn_w_file = w_path +str(it) +"_bn_weights.npy"
+            bn_b_file = w_path +str(it) +"_bn_bias.npy"
             if not os.path.isfile( w_file ) or not os.path.isfile( b_file ):
                 break
-            weight = np.load( w_file )
-            bias = np.load( b_file )
-            weight_list.append( [weight, bias] )
+            w_entry = []
+            w_entry.append( np.load( w_file ) ) 
+            w_entry.append( np.load( b_file ) )
+            if os.path.isfile( bn_w_file ) and os.path.isfile( bn_b_file ):
+                w_entry.append( np.load( bn_w_file ) )
+                w_entry.append( np.load( bn_b_file ) )
+            weight_list.append( w_entry )
             it += 1
         print( "Got " + str(len(weight_list)) + " set of weights" )
         return weight_list
