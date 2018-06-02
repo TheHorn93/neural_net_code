@@ -22,6 +22,7 @@ import optimizer
 import logger
 import bc4_data_loader as data_loader
 import training
+import curses_out
 
 
 logging_path = "/home/work/horn/data/"
@@ -61,7 +62,7 @@ class Instance:
             self.loaders.append( data_loader.BatchLoader( input_path +data_str, self.net.teacher_offset, device ) )
         if device is not None:
             self.net.cuda( device )
-        training.training( stdscr, self.log, self.net, self.loaders, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
+        training.training( curses_out.Display( stdscr, self.net.getStructure(), instance_string ), self.log, self.net, self.loaders, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
                      
     def parseArgs( self, loss, opt, epochs, data, epoch_gates=(None,None) ):
         if loss == "cross_entropy":

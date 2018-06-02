@@ -35,7 +35,6 @@ class BatchLoader:
         swap_rnd = np.random.randint( 2, size=bt_size )
         sc_id = np.random.randint( 5, size=bt_size )
         c_id = np.zeros( [bt_size], dtype=np.int32 )
-        print( "Loading from batches: " )
         
         r_ct = 0
         c_ct = 0
@@ -57,7 +56,6 @@ class BatchLoader:
                          +self.swap_dic[swap_rnd[it]]
                         )
             file_str = folder_str +"256x256x128/"
-            print( str(it) +": " + file_str )
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
             teacher = np.load( folder_str +"512x512x256.npy" )
             teacher = np.moveaxis( teacher, 2, 0 )
@@ -82,7 +80,6 @@ class BatchLoader:
             torch_batch = torch_batch.cuda(self.is_cuda)
             torch_teacher = torch_teacher.cuda(self.is_cuda)
             
-        print( "Batch: " +str(torch_teacher.size()) )
         return torch_batch, torch_teacher        
         
     def getDefaultBatch( self, bt_nbr, bt_size ):
@@ -138,7 +135,6 @@ class BatchLoader:
         swap_rnd = np.random.randint( 2, size=bt_size )
         sc_id = np.random.randint( 5, size=bt_size )
         c_id = np.zeros( [bt_size], dtype=np.int32 )
-        print( "Loading from batches: " )
         
         r_ct = 0
         c_ct = 0
@@ -160,7 +156,6 @@ class BatchLoader:
                          +self.swap_dic[swap_rnd[it]]
                          +"256x256x128/"
                         )
-            print( str(it) +": " + file_str )
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
             teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
             data_list.append( data.astype(np.float32) /255 )
@@ -193,7 +188,6 @@ class BatchLoader:
         swap_rnd = np.random.randint( 2, size=bt_size )
         sc_id = np.random.randint( 5, size=bt_size )
         c_id = np.random.randint( 3, size=bt_size )
-        print( "Loading from batches: " )
         
         data_list = []
         teacher_list = []
@@ -205,7 +199,6 @@ class BatchLoader:
                          +self.swap_dic[swap_rnd[it]]
                          +"256x256x128/"
                         )
-            print( str(it) +": " + file_str )
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
             teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
             data_list.append( data.astype( np.float32 ) /255 )
