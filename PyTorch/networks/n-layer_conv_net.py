@@ -15,71 +15,75 @@ class Network( nn.Module ):
     class ConvLayer( nn.Module ):
         def __init__( self, kernel_size, num_kernels, activation, bt_norm=False ):
             super( Network.ConvLayer, self ).__init__()
-            self.ops = []
-            self.bt_norm = bt_norm
+            self.apply_bt_norm = bt_norm
             if bt_norm:
-                self.ops.append( nn.BatchNorm3d( num_kernels[0] ) )
-            self.ops.append( nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) ) )
-            if activation is not None:
-                self.ops.append( activation )
+                self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
+            self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) )
+            self.activation = activation
             
-        def __call__( self, inp, res_inp=0 ):
+        def forward( self, inp, res_inp=0 ):
             output = inp
-            for op in self.ops:
-                output = op( output )
+            if self.apply_bt_norm:
+                output = self.bt_norm( output )
+            output = self.conv( output )
+            if self.activation is not None:
+                output = self.activation( output )
             return output
         
         def getParams( self ):
             if self.bt_norm:
-                params = [( self.ops[1].weight.cpu().data.numpy(), self.ops[1].bias.cpu().data.numpy() )]
-                params.append(( self.ops[0].weight.cpu().data.numpy(), self.ops[0].bias.cpu().data.numpy() ))
+                params = [( self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() )]
+                params.append(( self.bt_norm.weight.cpu().data.numpy(), self.bt_norm.bias.cpu().data.numpy() ))
             else:
-                params = [(self.ops[1].weight.cpu().data.numpy(), self.ops[1].bias.cpu().data.numpy() )]
+                params = [(self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() )]
                 
         def setParams( self, params ):
             if self.bt_norm:
-                self.ops[1].weight = nn.Parameter( torch.Tensor( params[0] ) )
-                self.ops[1].bias = nn.Parameter( torch.Tensor( params[1] ) )
-                self.ops[0].weight = nn.Parameter( torch.Tensor( params[2] ) )
-                self.ops[0].bias = nn.Parameter( torch.Tensor( params[3] ) )
+                self.conv.weight = nn.Parameter( torch.Tensor( params[0] ) )
+                self.conv.bias = nn.Parameter( torch.Tensor( params[1] ) )
+                self.bt_norm.weight = nn.Parameter( torch.Tensor( params[2] ) )
+                self.bt_norm.bias = nn.Parameter( torch.Tensor( params[3] ) )
             else:
-                self.ops[0].weight = nn.Parameter( torch.Tensor( params[0] ) )
-                self.ops[0].bias = nn.Parameter( torch.Tensor( params[1] ) )
+                self.conv.weight = nn.Parameter( torch.Tensor( params[0] ) )
+                self.conv.bias = nn.Parameter( torch.Tensor( params[1] ) )
   
     
     class ResConvLayer( nn.Module  ):
         def __init__( self, kernel_size, num_kernels, res_offset, activation, bt_norm=False ):
             super( Network.ResConvLayer, self ).__init__()
             self.offset = res_offset
-            self.ops = []
+            self.ops = nn.ModuleList()
             self.bt_norm = bt_norm
             if bt_norm:
                 self.ops.append( nn.BatchNorm3d( num_kernels[0] ) )
             self.ops.append( nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) ) )
-            self.ops.append( activation )
+            self.activation = activation
             
-        def __call__( self, inp, res_inp ):
+        def forward( self, inp, res_inp ):
             output = inp +res_inp[:,:,self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
-            for op in self.ops:
-                output = op( output )
+            if self.apply_bt_norm:
+                output = self.bt_norm( output )
+            output = self.conv( output )
+            if self.activation is not None:
+                output = self.activation( output )
             return output
         
         def getParams( self ):
             if self.bt_norm:
-                params = [( self.ops[1].weight.cpu().data.numpy(), self.ops[1].bias.cpu().data.numpy() )]
-                params.append(( self.ops[0].weight.cpu().data.numpy(), self.ops[0].bias.cpu().data.numpy() ))
+                params = [( self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() )]
+                params.append(( self.bt_norm.weight.cpu().data.numpy(), self.bt_norm.bias.cpu().data.numpy() ))
             else:
-                params = [(self.ops[1].weight.cpu().data.numpy(), self.ops[1].bias.cpu().data.numpy() )]
+                params = [(self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() )]
                 
         def setParams( self, params ):
             if self.bt_norm:
-                self.ops[1].weight = nn.Parameter( torch.Tensor( params[0] ) )
-                self.ops[1].bias = nn.Parameter( torch.Tensor( params[1] ) )
-                self.ops[0].weight = nn.Parameter( torch.Tensor( params[2] ) )
-                self.ops[0].bias = nn.Parameter( torch.Tensor( params[3] ) )
+                self.conv.weight = nn.Parameter( torch.Tensor( params[0] ) )
+                self.conv.bias = nn.Parameter( torch.Tensor( params[1] ) )
+                self.bt_norm.weight = nn.Parameter( torch.Tensor( params[2] ) )
+                self.bt_norm.bias = nn.Parameter( torch.Tensor( params[3] ) )
             else:
-                self.ops[0].weight = nn.Parameter( torch.Tensor( params[0] ) )
-                self.ops[0].bias = nn.Parameter( torch.Tensor( params[1] ) )
+                self.conv.weight = nn.Parameter( torch.Tensor( params[0] ) )
+                self.conv.bias = nn.Parameter( torch.Tensor( params[1] ) )
       
     
     def __init__( self, arg_list, arg_line ):
@@ -94,7 +98,7 @@ class Network( nn.Module ):
         print( "Created network" )
         
     def parseArgs( self, arg_list ):
-        self.layers = []
+        self.num_layer = len( arg_list )
         self.offset_list = []
         num_kernels = [1]
         for layer_str in arg_list:
@@ -107,7 +111,7 @@ class Network( nn.Module ):
                     bt_norm = True
                 else:
                     bt_norm = False
-                self.layers.append( self.ConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), self.parseAct(args[2]), bt_norm ) )
+                self.add_module( "conv_" +str(l_it), self.ConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), self.parseAct(args[2]), bt_norm ) )
             else:
                 res_offset = 0
                 for it in range( args[4], l_it ):
@@ -116,7 +120,7 @@ class Network( nn.Module ):
                     bt_norm = True
                 else:
                     bt_norm = False
-                self.layers.append( self.ResConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), res_offset, self.parseAct(args[2]), bt_norm ) )
+                self.add_module( "conv_" +str(l_it), self.ResConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), res_offset, self.parseAct(args[2]), bt_norm ) )
 
     def parseAct( self,  act_string ):
         if act_string == "relu":
@@ -148,8 +152,17 @@ class Network( nn.Module ):
 
     def forward( self, inp, ff=False ):
         output = inp
-        for layer in self.layers:
+        for idx, layer in enumerate( self.children() ):
             output = layer( output )
         if( ff ):
             output = funcs.sigmoid( output )
         return output
+    
+net = Network( ["3 8 relu False".split(), "3 1 sigmoid_out True".split()], "" )
+import torch.optim as opter
+#print( net.state_dict() ) 
+for idx, m in enumerate( net.children() ):
+    print( str(idx) + '->' +str(m) )
+inp = torch.ones( (1,1,20,20,20) )
+net( torch.autograd.Variable( inp ) )
+opt = opter.Adam( net, 0.5 ) 
