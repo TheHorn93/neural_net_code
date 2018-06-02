@@ -84,7 +84,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
         #Log
         log.logEpoch( epoch, tr_loss.cpu().data.numpy(), 0, tr_root_loss.cpu().data.numpy(), tr_soil_loss.cpu().data.numpy() )
         if( epoch %20 == 0):
-            weights = net.getWeightsCuda()
+            weights = net.getWeights()
             output = feedForward( net, loader, 0 )
             log.logWeights( weights )
             teacher = loader.getTeacherNp( 0, 4, loader.offset )

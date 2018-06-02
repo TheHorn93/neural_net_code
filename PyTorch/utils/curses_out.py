@@ -18,8 +18,8 @@ class Display:
         self.screen.addstr( 3, 0, instance_string )
         self.screen.refresh()
         self.avg_time = 0
-        self.offset = 6
-        self.bt_l_it = 6
+        self.offset = 7
+        self.bt_l_it = 7
         curses.init_pair( 1, curses.COLOR_YELLOW, curses.COLOR_BLACK )
         curses.init_pair( 2, curses.COLOR_GREEN, curses.COLOR_BLACK )
         curses.init_pair( 3, curses.COLOR_RED, curses.COLOR_BLACK )
@@ -31,14 +31,14 @@ class Display:
     def newEpoch( self, epoch, max_epochs ):
         self.st_pt = timeit.default_timer()
         self.cur_epoch = epoch
-        self.screen.addstr( 5, 0, "Epoch: ", curses.A_BOLD | curses.color_pair(2) )
-        self.screen.addstr( 5, 7, str(epoch) + " of "+ str(max_epochs) )
+        self.screen.addstr( 6, 0, "Epoch: ", curses.A_BOLD | curses.color_pair(2) )
+        self.screen.addstr( 6, 7, str(epoch) + " of "+ str(max_epochs) )
         self.screen.refresh()
     
     def addBatches( self, bt_nbr, of_slices ):
         for it in range( bt_nbr ):
-            self.screen.addstr( self.bt_l_it, 0, "Batch " +str( it ) )
-            self.screen.addstr( self.bt_l_it, 8, ": 0/" +str( of_slices ), curses.color_pair(3) )
+            self.screen.addstr( self.bt_l_it, 0, "Batch " +str( it ) +":" )
+            self.screen.addstr( self.bt_l_it, 9, " 0/" +str( of_slices ), curses.color_pair(3) )
             self.bt_l_it += 1
     
     def addComputed( self, batch_nbr, slce, of_slices ):

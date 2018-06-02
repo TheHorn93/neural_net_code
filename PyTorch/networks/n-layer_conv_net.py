@@ -31,14 +31,15 @@ class Network( nn.Module ):
             return output
         
         def getParams( self ):
-            if self.bt_norm:
-                params = [( self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() )]
-                params.append(( self.bt_norm.weight.cpu().data.numpy(), self.bt_norm.bias.cpu().data.numpy() ))
+            if self.apply_bt_norm:
+                params = [ self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() ]
+                params += [ self.bt_norm.weight.cpu().data.numpy(), self.bt_norm.bias.cpu().data.numpy() ]
             else:
-                params = [(self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() )]
+                params = (self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() )
+            return params
                 
         def setParams( self, params ):
-            if self.bt_norm:
+            if self.apply_bt_norm:
                 self.conv.weight = nn.Parameter( torch.Tensor( params[0] ) )
                 self.conv.bias = nn.Parameter( torch.Tensor( params[1] ) )
                 self.bt_norm.weight = nn.Parameter( torch.Tensor( params[2] ) )
@@ -138,7 +139,7 @@ class Network( nn.Module ):
 
     def getWeights( self ):
         weights = []
-        for layer in self.layers:
+        for idx, layer in enumerate( self.children() ):
             weights.append( layer.getParams() )
         return weights
     
