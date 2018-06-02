@@ -47,14 +47,15 @@ class Instance:
     def __init__( self, network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates=(None,None) ):
         self.proto_set = self.ProtoInstance( network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates )
         
-    def __call__( self, stdscr, device ):
+    def __call__( self, stdscr ):
         print( "Creating training instance" )
+        device = "cuda"
         self.parseArgs( self.proto_set.loss, self.proto_set.opt, self.proto_set.epochs, self.proto_set.data, self.proto_set.epoch_gates )
         self.lr = self.proto_set.lr
         self.batch_size = self.proto_set.batch_size
         self.slices = self.proto_set.slices
         self.net = network.Network( self.proto_set.network_set[0], self.proto_set.network_set[1] )
-        self.log = logger.DummyLogger( logging_path )
+        self.log = logger.Logger( logging_path )
         instance_string = "Training: loss="+ str( self.loss ) +", lr=" +str( self.lr ) + ", opt="+ str( self.opt ) +"\n" +"Data: data="+ str( self.data ) +", batch_size=" +str( self.batch_size ) +", slices=" +str( self.slices ) 
         self.log.masterLog( self.net.getStructure(), instance_string )
         self.loaders = []
@@ -87,8 +88,7 @@ class Instance:
 
 class Session:
     
-    def __init__( self, inp, stdscr ):
-        self.screen = stdscr
+    def __init__( self, inp ):
         parser = arg_parser.SessionArgumentParser() 
         args = parser( inp )
         self.device = args.device[0]
@@ -143,12 +143,12 @@ class Session:
     def runSession( self ):
         print( "Starting Session: " )
         for instance in self.instances:
-            instance( self.screen, torch.device( self.device ) )
+            curses.wrapper( instance.__call__ )
   
 
-def main( stdscr ):
-    ses = Session( sys.argv[1:], stdscr )
+def main( ):
+    ses = Session( sys.argv[1:] )
     ses()    
     
 if __name__ == '__main__':
-    curses.wrapper( main )
+    main()

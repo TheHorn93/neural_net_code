@@ -23,7 +23,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
     evle = evaluator.F1Score()
     opt = optimizer( net, lr )
     
-    for epoch in range( epochs ):
+    for epoch in range( 1, epochs+1 ):
         tr_loss = 0.0
         tr_root_loss = 0.0
         tr_soil_loss = 0.0
@@ -44,8 +44,8 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                     offset_dif = int( ( batch.size()[4] -teacher.size()[4] /2 ) /2 )
                     #batch, teacher = loader.getBatch( bt_size )
     
+                display.addBatches( bt_size, num_slices )
                 for it in range( bt_size ):
-                    display.addBatches( bt_size )
                     cut_it = int( round( ( batch.size()[4] -offset_dif*2) /num_slices ) )
                     cut_it_t = int( round( teacher.size()[4] /num_slices ) )
                     cut_id_t = 0
@@ -58,7 +58,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                         cut_id = end
                         input_data = batch[:,it,:,:,start-offset_dif:end+offset_dif].unsqueeze(1)
                         teacher_data = teacher[:,it,:,:,start_t:end_t].unsqueeze(1)
-                        display.addComputed( bt_it, jt, num_slices )
+                        display.addComputed( it, jt, num_slices )
                         
                         #Train
                         output = net( input_data, loss_func.apply_sigmoid )
@@ -79,7 +79,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
         tr_soil_loss /= bt_size *bt_per_it *num_slices
         opt.step()
 
-        display.endEpoch( tr_loss )
+        display.endEpoch( tr_loss.cpu().data.numpy() )
         
         #Log
         log.logEpoch( epoch, tr_loss.cpu().data.numpy(), 0, tr_root_loss.cpu().data.numpy(), tr_soil_loss.cpu().data.numpy() )

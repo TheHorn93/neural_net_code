@@ -157,12 +157,3 @@ class Network( nn.Module ):
         if( ff ):
             output = funcs.sigmoid( output )
         return output
-    
-net = Network( ["3 8 relu False".split(), "3 1 sigmoid_out True".split()], "" )
-import torch.optim as opter
-#print( net.state_dict() ) 
-for idx, m in enumerate( net.children() ):
-    print( str(idx) + '->' +str(m) )
-inp = torch.ones( (1,1,20,20,20) )
-net( torch.autograd.Variable( inp ) )
-opt = opter.Adam( net, 0.5 ) 

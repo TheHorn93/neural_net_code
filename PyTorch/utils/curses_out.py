@@ -22,6 +22,7 @@ class Display:
         self.bt_l_it = 6
         curses.init_pair( 1, curses.COLOR_YELLOW, curses.COLOR_BLACK )
         curses.init_pair( 2, curses.COLOR_GREEN, curses.COLOR_BLACK )
+        curses.init_pair( 3, curses.COLOR_RED, curses.COLOR_BLACK )
 
     def __call__( self ):
         inp = self.screen.getch()
@@ -34,13 +35,14 @@ class Display:
         self.screen.addstr( 5, 7, str(epoch) + " of "+ str(max_epochs) )
         self.screen.refresh()
     
-    def addBatches( self, bt_nbr ):
+    def addBatches( self, bt_nbr, of_slices ):
         for it in range( bt_nbr ):
             self.screen.addstr( self.bt_l_it, 0, "Batch " +str( it ) )
+            self.screen.addstr( self.bt_l_it, 8, ": 0/" +str( of_slices ), curses.color_pair(3) )
             self.bt_l_it += 1
     
     def addComputed( self, batch_nbr, slce, of_slices ):
-        self.screen.addstr( batch_nbr +self.offset, 8, ": " +str( slce ) +"/" +str( of_slices ) )
+        self.screen.addstr( batch_nbr +self.offset, 8, ": " +str( slce +1 ) +"/" +str( of_slices ) )
         self.screen.refresh()
 
     def endEpoch( self, train_loss ):
