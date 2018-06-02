@@ -10,12 +10,12 @@ import sys
 import torch
 import curses
 
-#sys.path.insert(0,"/home/work/horn/code/neural_net_code/PyTorch/networks/")
-sys.path.insert(0,"./networks/")
+sys.path.insert(0,"/home/work/horn/code/neural_net_code/PyTorch/networks/")
+#sys.path.insert(0,"./networks/")
 network = __import__( 'n-layer_conv_net' )
 
-#sys.path.insert(1, '/home/work/horn/code/neural_net_code/PyTorch/utils/' )
-sys.path.insert(1,"./utils/")
+sys.path.insert(1, '/home/work/horn/code/neural_net_code/PyTorch/utils/' )
+#sys.path.insert(1,"./utils/")
 import arg_parser
 import losses
 import optimizer
