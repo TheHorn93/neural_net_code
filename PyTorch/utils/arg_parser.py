@@ -64,6 +64,10 @@ class TrainParser():
         self.add.add_argument( "-sl", "--slices", help="Numbers of slices per run", nargs=1, type=int, default=[1] )
         self.add.add_argument( "-bs", "--batch_size", help="Number of data processes before gradient applience", nargs=1, type=int, default=[12] )
         
+        self.read = self.mode.add_parser( "read", help="Read from conf file" )
+        self.read.set_defaults( mode="read" )
+        self.read.add_argument( "-i", "--input", help="Read Networks from File", nargs=1, required=True )
+        
         self.run = self.mode.add_parser( "run", help="Run all added networks" )
         self.run.set_defaults( mode="run" )
         self.run.add_argument("-i", "--interactive", help="Allow interactive keyboard input during execution")
@@ -87,6 +91,13 @@ class NetworkParser():
         
     def __call__( self, inp ):
         return self.net_parser.parse_args( inp )
+
+
+def readFromFile( file_path ):
+    with open( file_path,'r' ) as file:
+        arg_list = ( file.read().split('\n') )
+    return arg_list[:-1]
         
 #par = NetworkParser()
 #print( par( "-l 5 8 relu -l 5 1 sigmoid bt".split() ) )
+#print( readFromFile( '/home/jhorn/Documents/Uni/conf.txt' ) )

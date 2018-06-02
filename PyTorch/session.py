@@ -117,6 +117,12 @@ class Session:
                     self.show()
                 elif self.mode == 'run':
                     self.runSession()
+                elif self.mode == 'read':
+                    net_list = arg_parser.readFromFile( cmd.input[0] )
+                    for arg in net_list:
+                        print(arg)
+                        new_inst = self.parser( arg.split() )
+                        self.addInstance( new_inst )
             except SystemExit:
                 pass
            
