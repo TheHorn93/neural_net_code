@@ -12,8 +12,9 @@ import torch.nn.functional as funcs
 class Network( nn.Module ):
     """Create conv net from cmd-line args"""
     
-    class ConvLayer( ):
+    class ConvLayer( nn.Module ):
         def __init__( self, kernel_size, num_kernels, activation, bt_norm=False ):
+            super( Network.ConvLayer, self ).__init__()
             self.ops = []
             self.bt_norm = bt_norm
             if bt_norm:
@@ -46,8 +47,9 @@ class Network( nn.Module ):
                 self.ops[0].bias = nn.Parameter( torch.Tensor( params[1] ) )
   
     
-    class ResConvLayer(  ):
+    class ResConvLayer( nn.Module  ):
         def __init__( self, kernel_size, num_kernels, res_offset, activation, bt_norm=False ):
+            super( Network.ResConvLayer, self ).__init__()
             self.offset = res_offset
             self.ops = []
             self.bt_norm = bt_norm
