@@ -18,8 +18,8 @@ class Network( nn.Module ):
             
         def forward( self, inp ):
             if self.apply_bt_norm:
-                output = self.bt_norm( inp )
-            output = self.conv( output )
+                inp = self.bt_norm( inp )
+            output = self.conv( inp )
             if self.activation is not None:
                 output = self.activation( output )
             return output
@@ -186,3 +186,9 @@ class Network( nn.Module ):
         if( ff ):
             output = funcs.sigmoid( output )
         return output
+
+#net = Network( ["5 3 relu False".split(),"5 3 relu True".split(),"1 sigmoid_out False".split(), "3 1 relu True".split()] , '')
+#net.cuda()
+#inp = torch.autograd.Variable( torch.ones( (1,1,200,200,200) ) ).cuda()
+#print( net( inp ) )
+#print( net.teacher_offset )
