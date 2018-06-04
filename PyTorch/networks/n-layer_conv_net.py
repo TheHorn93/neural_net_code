@@ -160,7 +160,7 @@ class Network( nn.Module ):
         self.layers[it].setParams( weights )
     
     def setWeights( self, weight_list ):
-        for idx, layer enumerate( self.children() ):
+        for idx, layer in enumerate( self.children() ):
             layer.setParams( weight_list[idx] )
 
 

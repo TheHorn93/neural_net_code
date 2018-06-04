@@ -15,7 +15,7 @@ class SessionArgumentParser( ):
         self.parser = argparse.ArgumentParser()
         self.mode = self.parser.add_subparsers( help="Command modes" )
         self.parser.add_argument( "-d", "--device", help="Device to run", nargs=1, default=["cuda"] )
-        self.parser.add_argument( "-de", "--debug", help="Disable hard-drive logging", default = [False], action="const_true" )
+        self.parser.add_argument( "-de", "--debug", help="Disable hard-drive logging", default = [False], action="store_true" )
         self.feed = self.mode.add_parser( "feed", help="Feed pretrained network" )
         self.feed.set_defaults( mode="feed" )        
         self.train = self.mode.add_parser( "train", help="Train network" )
@@ -42,8 +42,8 @@ class FeedParser():
         self.run = self.mode.add_parser( "run", help="Run all added networks" )
         self.run.set_defaults( mode="run" )
         self.run.add_argument("-d", "--data", help="Which type of data to use", nargs='+')
-        self.run.add_argument("-r", "--real", help="Use real data as input", action="store_true", default=[False] )
-        self.run.add_argument("-s", "--synth", help="Use synthetic data as input", action="store_true", default=[False] )
+        self.run.add_argument("-r", "--real", help="Use real data as input", action="store_true", default=False )
+        self.run.add_argument("-s", "--synth", help="Use synthetic data as input", action="store_true", default=False )
 
     def __call__( self, inp ):
         return self.parser.parse_args( inp )

@@ -94,19 +94,20 @@ class Instance:
 class FeedInstance:
     
     def __init__( self, log, epoch ):
-        self.log = logger.Log( logging_path +log )
+        self.log = logger.Log( logging_path +log +"/" )
         self.epoch = epoch
+        self.net_parser = arg_parser.NetworkParser()
         
     def __call__( self, data, data_usage ):
         print( "Loading Log: " +self.log.log_path ) 
-        epoch_str = "epoch_" +str( self.epoch )
+        epoch_str = "epoch_" +str( self.epoch ) +"/"
         model = self.log.getNetwork()
-        net = network.Network( self.net_parser( model.split() ) )
+        net = network.Network( self.net_parser( model.split() ).layers )
         weights = self.log.getWeights( epoch_str )
         net.setWeights( weights )
         device = "cuda" # TODO change to command line arg
         if device is not None:
-            self.net.cuda( device )
+            net.cuda( device )
             
         if data_usage[0]:
             rd_loader = []
@@ -114,7 +115,7 @@ class FeedInstance:
             for it in range( len(rd_loader)):
                 output = training.feedForward( net, rd_loader[it], 0, 1 )
                 self.log.visualizeOutputStack( output[0], epoch_str +"output/", str(it) +"/real/" )
-                self.log.saveOutputAsNPY( output[0], epoch_str +"output/", str(it) +"/real/", resize=(256,256,128) )
+                self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(it) +"/real/", resize=(256,256,128) )
 
         if data_usage[1]:
             loaders = []
@@ -124,7 +125,7 @@ class FeedInstance:
                 #teacher = loader.getTeacherNp( 0, 4, loaders[lt.offset )
                 for it in range( 4 ):
                     self.log.visualizeOutputStack( output[it], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/" )
-                    self.log.saveOutputAsNPY( output[0], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/", resize=(256,256,128) )
+                    self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(lt) +"/scan_" +str(it) +"/", resize=(256,256,128) )
         
 
 class Session:
@@ -135,19 +136,19 @@ class Session:
         debug_mode = args.debug[0]
         self.device = args.device[0]
         if args.mode == "feed":
-            self.feed = True
+            self.is_feed = True
             self.parser = arg_parser.FeedParser()
         elif args.mode == "train":
-            self.feed = False
+            self.is_feed = False
             self.parser = arg_parser.TrainParser()
         self.mode = 'add'
         self.net_parser = arg_parser.NetworkParser()
         self.instances = []
             
     def __call__( self ):
-        if self.feed:
+        if not self.is_feed:
             self.train()
-        elif self.feed:
+        elif self.is_feed:
             self.feed()
      
     def feed( self ):
@@ -157,7 +158,7 @@ class Session:
                 cmd = self.parser( new_cmd.split() )
                 self.mode = cmd.mode
                 if self.mode == 'add':
-                    self.instances.append( cmd.log, cmd.epoch )
+                    self.instances.append( FeedInstance( cmd.log[0], cmd.epoch[0] ) )
                 if self.mode == 'show':
                     self.show()
                 elif self.mode == 'run':
@@ -167,7 +168,7 @@ class Session:
                     for arg in log_list:
                         print(arg)
                         new_inst = self.parser( arg.split() )
-                        self.instances.append( new_inst.log, new_inst.epoch )
+                        self.instances.append( FeedInstance( new_inst.log[0], new_inst.epoch[0] ) )
             except SystemExit:
                 pass
     
@@ -219,6 +220,11 @@ class Session:
         print( "Starting Session: " )
         for instance in self.instances:
             curses.wrapper( instance.__call__ )
+
+    def feedSession( self, data, data_usage ):
+        print( "Starting Feast: " )
+        for instance in self.instances:
+            instance( data, data_usage )
   
 
 def main( ):

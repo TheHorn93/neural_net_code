@@ -273,7 +273,7 @@ class RealDataLoader:
         self.path = input_path
         self.is_cuda = is_cuda
     
-    def getBatch( self, bt_nbr=0, bt_size=0 ):
+    def getDefaultBatch( self, bt_nbr=0, bt_size=0 ):
         print( "Loading from: " + self.path )
         output = np.zeros( [256,256,128], np.ubyte )
         for it in range( 128 ):
