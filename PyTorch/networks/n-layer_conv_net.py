@@ -119,10 +119,11 @@ class Network( nn.Module ):
         self.offset_list = []
         num_kernels = [1]
         for layer_str in arg_list:
-            self.offset_list.append( ( int( layer_str[0] ) -1 ) /2 )
             if len( layer_str ) == 3:
+                self.offset_list.append( 0 )
                 num_kernels.append( int( layer_str[0] ) )
             else:
+                self.offset_list.append( int( (int( layer_str[0] ) -1) /2 ) )
                 num_kernels.append( int( layer_str[1] ) )
         for l_it in range( len( arg_list ) ):
             args = arg_list[l_it]
@@ -149,6 +150,7 @@ class Network( nn.Module ):
                 if not self.ups:
                     self.teacher_offset *= 2
                     self.add_module( "transp_conv" +str(l_it), self.Upsample( ( num_kernels[l_it], num_kernels[l_it +1] ), self.parseAct(args[2]), bt_norm ) )
+                    self.ups = True
             self.teacher_offset += self.offset_list[l_it]
 
     def parseAct( self,  act_string ):

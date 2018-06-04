@@ -42,6 +42,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                 else:
                     batch, teacher = loader.getBatchAndUpsampledGT( bt_size )
                     offset_dif = int( ( batch.size()[4] -teacher.size()[4] /2 ) /2 )
+                    display.addLine( str(offset_dif) )
                     #batch, teacher = loader.getBatch( bt_size )
     
                 display.addBatches( bt_size, num_slices )
@@ -56,8 +57,17 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                         end =  min( batch.size()[4], cut_it +start)
                         cut_id_t = end_t
                         cut_id = end
+                        if (end_t -start_t) %2 != 0:
+                            if(end_t == teacher.size()[4]):
+                                start_t += 1
+                                start += 1
+                            else:
+                                end_t += 1
+                                end += 1
                         input_data = batch[:,it,:,:,start-offset_dif:end+offset_dif].unsqueeze(1)
                         teacher_data = teacher[:,it,:,:,start_t:end_t].unsqueeze(1)
+                        #display.addLine( str( net.teacher_offset ) +" from " +str( net.offset_list ) )
+                        #display.addLine( str( input_data.size() ) +" <> " +str( teacher_data.size() ) )
                         display.addComputed( it, jt, num_slices )
                         
                         #Train

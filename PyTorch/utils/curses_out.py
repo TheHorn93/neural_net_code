@@ -20,9 +20,11 @@ class Display:
         self.avg_time = 0
         self.offset = 7
         self.bt_l_it = 7
+        self.save_offset = 23
         curses.init_pair( 1, curses.COLOR_YELLOW, curses.COLOR_BLACK )
         curses.init_pair( 2, curses.COLOR_GREEN, curses.COLOR_BLACK )
         curses.init_pair( 3, curses.COLOR_RED, curses.COLOR_BLACK )
+        self.log_file = open( "./session.log", 'w' )
 
     def __call__( self ):
         inp = self.screen.getch()
@@ -54,4 +56,8 @@ class Display:
         self.screen.addstr( self.bt_l_it +2, 0, str( self.time ) +" average: " +str( self.avg_time /self.cur_epoch ) )
         self.bt_l_it = self.offset
         self.screen.refresh()
-        
+
+    def addLine( self, line, opt='a' ):
+        self.screen.addstr( self.offset, 0, line )
+        self.log_file.write( line +"\n" )
+        self.screen.refresh()
