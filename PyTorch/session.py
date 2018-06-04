@@ -109,19 +109,26 @@ class FeedInstance:
         if device is not None:
             net.cuda( device )
             
+        self.data_str = []
+        for data_set in data:   
+            if data_set == 'lupine_small':
+                self.data_str.append( 'lupine_small_xml/' )
+            elif data_set == 'lupine_22':
+                self.data_str.append( 'Lupine_22august/' )
+            elif data_set == 'gtk':
+                self.data_str.append( 'gtk/' )    
+        
         if data_usage[0]:
-            rd_loader = []
-            rd_loader.append( data_loader.RealDataLoader( real_scan_path , device ) )
-            for it in range( len(rd_loader)):
-                output = training.feedForward( net, rd_loader[it], 0, 1 )
+            for it in range( len(self.data_str)):
+                rd_loader = data_loader.RealDataLoader( real_scan_path , device )
+                output = training.feedForward( net, rd_loader, 0, 1 )
                 self.log.visualizeOutputStack( output[0], epoch_str +"output/", str(it) +"/real/" )
                 self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(it) +"/real/", resize=(256,256,128) )
 
         if data_usage[1]:
-            loaders = []
-            loaders.append( data_loader.BatchLoader( input_path, net.teacher_offset, device ) )
-            for lt in range( len(rd_loader)):
-                output = training.feedForward( net, loaders[lt] )
+            for lt in range( len(self.data_str)):
+                loader = data_loader.BatchLoader( input_path, net.teacher_offset, device )
+                output = training.feedForward( net, loader )
                 #teacher = loader.getTeacherNp( 0, 4, loaders[lt.offset )
                 for it in range( 4 ):
                     self.log.visualizeOutputStack( output[it], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/" )
