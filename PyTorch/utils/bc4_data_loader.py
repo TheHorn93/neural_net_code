@@ -26,6 +26,11 @@ class BatchLoader:
         self.y_flip_dic = ["y_flip_0/","y_flip_1/"]
         self.swap_dic = ["x_y_swap_0/","x_y_swap_1/"]
         self.c_dic = ["g","h","l"]
+        if input_path == "Lupine_22august/":
+            self.fold = "256x256x120/"
+        else:
+            self.fold = "256x256x128/"
+            
         
     def getBatchAndUpsampledGT( self, bt_size ):
         r_fac_rnd = np.zeros( [bt_size], dtype=np.int32 )
@@ -100,8 +105,8 @@ class BatchLoader:
                          +self.x_flip_dic[x_flip_rnd[it]]
                          +self.y_flip_dic[y_flip_rnd[it]]
                          +self.swap_dic[swap_rnd[it]]
-                         +"256x256x128/"
-                        )
+                         +self.fold
+                         )
             print( str(it) +": " + file_str )
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
             teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]

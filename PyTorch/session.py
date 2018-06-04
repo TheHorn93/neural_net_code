@@ -29,6 +29,8 @@ logging_path = "/home/work/horn/data/"
 input_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
 real_scan_path = "/home/work/uzman/Real_MRI/Lupine_small/01_tiff_stack/"
 
+debug_mode = False
+
 class Instance:
     
     class ProtoInstance:
@@ -55,7 +57,10 @@ class Instance:
         self.batch_size = self.proto_set.batch_size
         self.slices = self.proto_set.slices
         self.net = network.Network( self.proto_set.network_set[0], self.proto_set.network_set[1] )
-        self.log = logger.Logger( logging_path )
+        if debug_mode:
+            self.log = logger.DummyLogger( logging_path )
+        else:
+            self.log = logger.Logger( logging_path )
         instance_string = "Training: loss="+ str( self.loss ) +", lr=" +str( self.lr ) + ", opt="+ str( self.opt ) +"\n" +"Data: data="+ str( self.data ) +", batch_size=" +str( self.batch_size ) +", slices=" +str( self.slices ) 
         self.log.masterLog( self.net.getStructure(), instance_string )
         self.loaders = []
@@ -86,11 +91,48 @@ class Instance:
         self.epochs = epochs
 
 
+class FeedInstance:
+    
+    def __init__( self, log, epoch ):
+        self.log = logger.Log( logging_path +log )
+        self.epoch = epoch
+        
+    def __call__( self, data, data_usage ):
+        print( "Loading Log: " +self.log.log_path ) 
+        epoch_str = "epoch_" +str( self.epoch )
+        model = self.log.getNetwork()
+        net = network.Network( self.net_parser( model.split() ) )
+        weights = self.log.getWeights( epoch_str )
+        net.setWeights( weights )
+        device = "cuda" # TODO change to command line arg
+        if device is not None:
+            self.net.cuda( device )
+            
+        if data_usage[0]:
+            rd_loader = []
+            rd_loader.append( data_loader.RealDataLoader( real_scan_path , device ) )
+            for it in range( len(rd_loader)):
+                output = training.feedForward( net, rd_loader[it], 0, 1 )
+                self.log.visualizeOutputStack( output[0], epoch_str +"output/", str(it) +"/real/" )
+                self.log.saveOutputAsNPY( output[0], epoch_str +"output/", str(it) +"/real/", resize=(256,256,128) )
+
+        if data_usage[1]:
+            loaders = []
+            loaders.append( data_loader.BatchLoader( input_path, net.teacher_offset, device ) )
+            for lt in range( len(rd_loader)):
+                output = training.feedForward( net, loaders[lt] )
+                #teacher = loader.getTeacherNp( 0, 4, loaders[lt.offset )
+                for it in range( 4 ):
+                    self.log.visualizeOutputStack( output[it], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/" )
+                    self.log.saveOutputAsNPY( output[0], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/", resize=(256,256,128) )
+        
+
 class Session:
     
     def __init__( self, inp ):
         parser = arg_parser.SessionArgumentParser() 
         args = parser( inp )
+        debug_mode = args.debug[0]
         self.device = args.device[0]
         if args.mode == "feed":
             self.feed = True
@@ -103,6 +145,33 @@ class Session:
         self.instances = []
             
     def __call__( self ):
+        if self.feed:
+            self.train()
+        elif self.feed:
+            self.feed()
+     
+    def feed( self ):
+        while( self.mode != 'run' ):
+            new_cmd = input( "Next action: " )
+            try:
+                cmd = self.parser( new_cmd.split() )
+                self.mode = cmd.mode
+                if self.mode == 'add':
+                    self.instances.append( cmd.log, cmd.epoch )
+                if self.mode == 'show':
+                    self.show()
+                elif self.mode == 'run':
+                    self.feedSession( cmd.data, ( cmd.real, cmd.synth ) )
+                elif self.mode == 'read':
+                    log_list = arg_parser.readFromFile( cmd.input[0] )
+                    for arg in log_list:
+                        print(arg)
+                        new_inst = self.parser( arg.split() )
+                        self.instances.append( new_inst.log, new_inst.epoch )
+            except SystemExit:
+                pass
+    
+    def train( self ):
         while( self.mode != 'run' ):
             new_cmd = input( "Next action: " )
             try:
@@ -125,7 +194,7 @@ class Session:
                         self.addInstance( new_inst )
             except SystemExit:
                 pass
-           
+          
    
     def addInstance( self, args ):
         """ Get line and test it in n-layer_conv_net parser """

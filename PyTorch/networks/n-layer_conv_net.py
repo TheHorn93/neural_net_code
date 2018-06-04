@@ -71,23 +71,6 @@ class Network( nn.Module ):
         def forward( self, inp, res_inp ):
             output = inp +res_inp[:,:,self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
             return super( Network.ResConvLayer, self ).forward( output )
-        
-        def getParams( self ):
-            if self.bt_norm:
-                params = [( self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() )]
-                params.append(( self.bt_norm.weight.cpu().data.numpy(), self.bt_norm.bias.cpu().data.numpy() ))
-            else:
-                params = [(self.conv.weight.cpu().data.numpy(), self.conv.bias.cpu().data.numpy() )]
-                
-        def setParams( self, params ):
-            if self.bt_norm:
-                self.conv.weight = nn.Parameter( torch.Tensor( params[0] ) )
-                self.conv.bias = nn.Parameter( torch.Tensor( params[1] ) )
-                self.bt_norm.weight = nn.Parameter( torch.Tensor( params[2] ) )
-                self.bt_norm.bias = nn.Parameter( torch.Tensor( params[3] ) )
-            else:
-                self.conv.weight = nn.Parameter( torch.Tensor( params[0] ) )
-                self.conv.bias = nn.Parameter( torch.Tensor( params[1] ) )
                 
                 
     class Upsample( ConvLayerBase ):
@@ -104,7 +87,7 @@ class Network( nn.Module ):
             return super( Network.Upsample, self ).forward( output )
       
     
-    def __init__( self, arg_list, arg_line ):
+    def __init__( self, arg_list, arg_line='' ):
         super( Network, self ).__init__()
         self.model = ' '.join( arg_line )
         self.ups = False
@@ -177,8 +160,8 @@ class Network( nn.Module ):
         self.layers[it].setParams( weights )
     
     def setWeights( self, weight_list ):
-        for l_it in range( len( self.layers ) ):
-            self.setLayer( l_it, weight_list[l_it] )
+        for idx, layer enumerate( self.children() ):
+            layer.setParams( weight_list[idx] )
 
 
     def forward( self, inp, ff=False ):

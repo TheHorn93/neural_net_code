@@ -15,6 +15,7 @@ class SessionArgumentParser( ):
         self.parser = argparse.ArgumentParser()
         self.mode = self.parser.add_subparsers( help="Command modes" )
         self.parser.add_argument( "-d", "--device", help="Device to run", nargs=1, default=["cuda"] )
+        self.parser.add_argument( "-de", "--debug", help="Disable hard-drive logging", default = [False], action="const_true" )
         self.feed = self.mode.add_parser( "feed", help="Feed pretrained network" )
         self.feed.set_defaults( mode="feed" )        
         self.train = self.mode.add_parser( "train", help="Train network" )
@@ -34,11 +35,15 @@ class FeedParser():
         self.add.add_argument("-l", "--log", help="Path to log to load from (required)" , nargs=1, required=True )
         self.add.add_argument("-e", "--epoch", help="Specific epoch to load from", nargs=1, default=None )
         
+        self.read = self.mode.add_parser( "read", help="Read from conf file" )
+        self.read.set_defaults( mode="read" )
+        self.read.add_argument( "-i", "--input", help="Read Log Paths from File", default=["/home/work/horn/code/neural_net_code/PyTorch/feed.conf"] )
+        
         self.run = self.mode.add_parser( "run", help="Run all added networks" )
         self.run.set_defaults( mode="run" )
         self.run.add_argument("-d", "--data", help="Which type of data to use", nargs='+')
-        self.run.add_argument("-r", "--real", help="Use real data as input", action="store_true", default=False )
-        self.run.add_argument("-s", "--synth", help="Use synthetic data as input", action="store_true", default=False )
+        self.run.add_argument("-r", "--real", help="Use real data as input", action="store_true", default=[False] )
+        self.run.add_argument("-s", "--synth", help="Use synthetic data as input", action="store_true", default=[False] )
 
     def __call__( self, inp ):
         return self.parser.parse_args( inp )

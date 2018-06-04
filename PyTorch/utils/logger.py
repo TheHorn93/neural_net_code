@@ -136,6 +136,12 @@ class Log:
     def __init__( self, log_path ):
         self.log_path = log_path
         
+    def getNetwork( self ):
+        mod_path = self.log_path +"model.txt"
+        print( "Loading network from: " +mod_path )
+        file = open( mod_path, 'r' )
+        return file.readline()
+        
     def getWeights( self, path="" ):
         print( "Loading weights from: " +self.log_path + path )
         w_path = self.log_path + path
