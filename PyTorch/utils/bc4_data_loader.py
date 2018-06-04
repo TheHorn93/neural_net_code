@@ -272,17 +272,11 @@ class RealDataLoader:
     def __init__( self, input_path, is_cuda = -1 ):
         self.path = input_path
         self.is_cuda = is_cuda
-    
+
     def getDefaultBatch( self, bt_nbr=0, bt_size=0 ):
         print( "Loading from: " + self.path )
-        output = np.zeros( [256,256,128], np.ubyte )
-        for it in range( 128 ):
-            im_name = "lupi8_test" + "{0:0>4}".format(it) + ".tif"
-            print( self.path +im_name )
-            im = cv2.imread( self.path + im_name )
-            im = cv2.cvtColor( im, cv2.COLOR_RGB2GRAY )
-            output[:,:,it] = im
-        output = output.reshape( [1,1,256,256,128] )
+        data = np.load( self.path +"mri.npy" )
+        output = data.reshape( [1,1,data.shape[0],data.shape[2],data.shape[3]] )
         output = output.astype( np.float64 )
         output /= 255
         print( str( np.amin(output) ) + "<" + str( np.amax(output) ) )
@@ -293,14 +287,14 @@ class RealDataLoader:
     
     def getRealScan( self ):
         print( "Loading from: " + self.path )
-        output = np.zeros( [256,256,128], np.ubyte )
+        output = np.zeros( [128,256,256], np.ubyte )
         for it in range( 128 ):
             im_name = "lupi8_test" + "{0:0>4}".format(it) + ".tif"
             print( self.path +im_name )
             im = cv2.imread( self.path + im_name )
             im = cv2.cvtColor( im, cv2.COLOR_RGB2GRAY )
-            output[:,:,it] = im
-        output = output.reshape( [1,1,256,256,128] )
+            output[it,:,:] = im
+        output = output.reshape( [1,1,128,256,256] )
         output = output.astype( np.float64 )
         output /= 255
         return output

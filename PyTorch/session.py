@@ -27,7 +27,7 @@ import curses_out
 
 logging_path = "/home/work/horn/data/"
 input_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
-real_scan_path = "/home/work/uzman/Real_MRI/Lupine_small/01_tiff_stack/"
+real_scan_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
 
 debug_mode = False
 
@@ -120,10 +120,10 @@ class FeedInstance:
         
         if data_usage[0]:
             for it in range( len(self.data_str)):
-                rd_loader = data_loader.RealDataLoader( real_scan_path , device )
+                rd_loader = data_loader.RealDataLoader( real_scan_path +self.data_str[it] , device )
                 output = training.feedForward( net, rd_loader, 0, 1 )
                 self.log.visualizeOutputStack( output[0], epoch_str +"output/", str(it) +"/real/" )
-                self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(it) +"/real/", resize=(256,256,128) )
+                self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(it) +"/real/", resize=(128,256,256) )
 
         if data_usage[1]:
             for lt in range( len(self.data_str)):
