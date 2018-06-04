@@ -127,12 +127,12 @@ class FeedInstance:
 
         if data_usage[1]:
             for lt in range( len(self.data_str)):
-                loader = data_loader.BatchLoader( input_path, net.teacher_offset, device )
+                loader = data_loader.BatchLoader( input_path +self.data_str[lt], net.teacher_offset, device )
                 output = training.feedForward( net, loader )
                 #teacher = loader.getTeacherNp( 0, 4, loaders[lt.offset )
                 for it in range( 4 ):
                     self.log.visualizeOutputStack( output[it], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/" )
-                    self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(lt) +"/scan_" +str(it) +"/", resize=(256,256,128) )
+                    self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(lt) +"/scan_" +str(it) +"/", resize=(128,256,256) )
         
 
 class Session:
