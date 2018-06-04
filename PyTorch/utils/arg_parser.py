@@ -66,7 +66,7 @@ class TrainParser():
         
         self.read = self.mode.add_parser( "read", help="Read from conf file" )
         self.read.set_defaults( mode="read" )
-        self.read.add_argument( "-i", "--input", help="Read Networks from File", nargs=1, required=True )
+        self.read.add_argument( "-i", "--input", help="Read Networks from File", default=["/home/work/horn/code/neural_net_code/PyTorch/session.conf"] )
         
         self.run = self.mode.add_parser( "run", help="Run all added networks" )
         self.run.set_defaults( mode="run" )
@@ -94,6 +94,7 @@ class NetworkParser():
 
 
 def readFromFile( file_path ):
+    print( "Reading from: " +file_path  )
     with open( file_path,'r' ) as file:
         arg_list = ( file.read().split('\n') )
     return arg_list[:-1]
