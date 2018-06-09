@@ -16,7 +16,7 @@ class Network( nn.Module ):
         def __init__( self ):
             super( Network.ConvLayerBase, self ).__init__()
             
-        def forward( self, inp ):
+        def forward( self, inp, res_list ):
             if self.apply_bt_norm:
                 inp = self.bt_norm( inp )
             output = self.conv( inp )
@@ -52,24 +52,25 @@ class Network( nn.Module ):
             self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) )
             self.activation = activation
             
-        def forward( self, inp, res_inp=0 ):
+        def forward( self, inp ):
             output = inp
             return super( Network.ConvLayer, self ).forward( output )
         
     
     class ResConvLayer( ConvLayerBase ):
-        def __init__( self, kernel_size, num_kernels, res_offset, activation, bt_norm=False ):
+        def __init__( self, kernel_size, num_kernels, res_layer, res_offset, activation, bt_norm=False ):
             super( Network.ResConvLayer, self ).__init__()
-            self.offset = res_offset
             self.ops = nn.ModuleList()
             self.bt_norm = bt_norm
             if bt_norm:
                 self.ops.append( nn.BatchNorm3d( num_kernels[0] ) )
             self.ops.append( nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) ) )
             self.activation = activation
+            self.res_layer = res_layer
+            self.offset = res_offset
             
-        def forward( self, inp, res_inp ):
-            output = inp +res_inp[:,:,self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
+        def forward( self, inp, res_list ):
+            output = inp +res_list[self.res_layer][:,:,self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
             return super( Network.ResConvLayer, self ).forward( output )
                 
                 
@@ -124,7 +125,11 @@ class Network( nn.Module ):
                     bt_norm = True
                 else:
                     bt_norm = False
-                self.add_module( "conv_" +str(l_it), self.ResConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), res_offset, self.parseAct(args[2]), bt_norm ) )
+                res_layer = int( args[2] )
+                res_offset = 0
+                for off_it in range( res_layer, l_it ):
+                    res_offset += self.offset_list[off_it]
+                self.add_module( "conv_" +str(l_it), self.ResConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), res_layer, res_offset, self.parseAct(args[3]), bt_norm ) )
             elif len( args ) == 3:
                 if args[2] == 'True':
                     bt_norm = True
@@ -165,9 +170,11 @@ class Network( nn.Module ):
 
 
     def forward( self, inp, ff=False ):
+        layer_output = [ inp ]
         output = inp
         for idx, layer in enumerate( self.children() ):
-            output = layer( output )
+            output = layer( output, layer_output )
+            layer_output.append( output )
         if( ff ):
             output = funcs.sigmoid( output )
         return output
