@@ -52,26 +52,26 @@ class Network( nn.Module ):
             self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) )
             self.activation = activation
             
-        def forward( self, inp ):
+        def forward( self, inp, res_list=0 ):
             output = inp
-            return super( Network.ConvLayer, self ).forward( output )
+            return super( Network.ConvLayer, self ).forward( output, res_list )
         
     
     class ResConvLayer( ConvLayerBase ):
         def __init__( self, kernel_size, num_kernels, res_layer, res_offset, activation, bt_norm=False ):
             super( Network.ResConvLayer, self ).__init__()
             self.ops = nn.ModuleList()
-            self.bt_norm = bt_norm
+            self.apply_bt_norm = bt_norm
             if bt_norm:
-                self.ops.append( nn.BatchNorm3d( num_kernels[0] ) )
-            self.ops.append( nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) ) )
+                self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
+            self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) )
             self.activation = activation
             self.res_layer = res_layer
             self.offset = res_offset
             
         def forward( self, inp, res_list ):
             output = inp +res_list[self.res_layer][:,:,self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
-            return super( Network.ResConvLayer, self ).forward( output )
+            return super( Network.ResConvLayer, self ).forward( output, res_list )
                 
                 
     class Upsample( ConvLayerBase ):
