@@ -142,10 +142,12 @@ class Session:
     def __init__( self, inp ):
         parser = arg_parser.SessionArgumentParser() 
         args = parser( inp )
-        global debug_mode = args.debug[0]
+        global debug_mode 
+        debug_mode = args.debug[0]
         self.device = args.device[0]
         session_log = "session_" +time.strftime( "%Y-%m-%d_%H%M%S/" )
-        global logging_path += session_log
+        global logging_path 
+        logging_path += session_log
         if not os.path.exists( logging_path ):
             os.makedirs( logging_path )
         if args.mode == "feed":
