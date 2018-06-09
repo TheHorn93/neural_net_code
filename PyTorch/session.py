@@ -9,6 +9,8 @@ Created on Mon May 28 15:12:43 2018
 import sys
 import torch
 import curses
+import time
+import os
 
 sys.path.insert(0,"/home/work/horn/code/neural_net_code/PyTorch/networks/")
 #sys.path.insert(0,"./networks/")
@@ -140,8 +142,12 @@ class Session:
     def __init__( self, inp ):
         parser = arg_parser.SessionArgumentParser() 
         args = parser( inp )
-        debug_mode = args.debug[0]
+        global debug_mode = args.debug[0]
         self.device = args.device[0]
+        session_log = "session_" +time.strftime( "%Y-%m-%d_%H%M%S/" )
+        global logging_path += session_log
+        if not os.path.exists( logging_path ):
+            os.makedirs( logging_path )
         if args.mode == "feed":
             self.is_feed = True
             self.parser = arg_parser.FeedParser()
