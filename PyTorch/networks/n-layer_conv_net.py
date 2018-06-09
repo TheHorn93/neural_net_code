@@ -118,14 +118,11 @@ class Network( nn.Module ):
                     bt_norm = False
                 self.add_module( "conv_" +str(l_it), self.ConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), self.parseAct(args[2]), bt_norm ) )
             elif len( args ) == 5:
-                res_offset = 0
-                for it in range( args[4], l_it ):
-                    res_offset += self.offset_list[it]
                 if args[3] == 'True':
                     bt_norm = True
                 else:
                     bt_norm = False
-                res_layer = int( args[2] )
+                res_layer = int( args[3] )
                 res_offset = 0
                 for off_it in range( res_layer, l_it ):
                     res_offset += self.offset_list[off_it]
