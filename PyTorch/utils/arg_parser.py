@@ -66,7 +66,7 @@ class TrainParser():
         self.add.add_argument( "-ls", "--loss", help="Loss function to use and parameters", nargs=1, default=["cross_entropy"] )
         self.add.add_argument( "-eg", "--epoch_gates", help="Epoch gates for loss method", nargs='+', type=int )
         self.add.add_argument( "-op", "--optimizer", help="Optimizer to use", nargs=1, default=["adam"] )
-        self.add.add_argument( "-sl", "--slices", help="Numbers of slices per run", nargs=1, type=int, default=[1] )
+        self.add.add_argument( "-sl", "--slices", help="Numbers of slices per run", nargs=3, type=int, default=[1,1,1] )
         self.add.add_argument( "-bs", "--batch_size", help="Number of data processes before gradient applience", nargs=1, type=int, default=[12] )
         
         self.read = self.mode.add_parser( "read", help="Read from conf file" )

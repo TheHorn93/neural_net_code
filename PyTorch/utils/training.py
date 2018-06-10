@@ -6,6 +6,7 @@ Created on Wed May 30 05:19:33 2018
 @author: root
 """
 import evaluator
+import split_data as sd
 import numpy as np
 
 def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
@@ -47,33 +48,16 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
     
                 display.addBatches( bt_size, num_slices )
                 for it in range( bt_size ):
-                    cut_it = int( round( ( batch.size()[4] -offset_dif*2) /num_slices ) )
-                    cut_it_t = int( round( teacher.size()[4] /num_slices ) )
-                    cut_id_t = 0
-                    cut_id = offset_dif
+                    inp, tch = sd.splitInputAndTeacher( batch[it], teacher[it], num_slices, net.ups )
                     for jt in range( num_slices ):
-                        start_t, end_t = cut_id_t, min( teacher.size()[4], cut_it_t *(jt+1) )
-                        start = cut_id
-                        end =  min( batch.size()[4], cut_it +start)
-                        cut_id_t = end_t
-                        cut_id = end
-                        if (end_t -start_t) %2 != 0:
-                            if(end_t == teacher.size()[4]):
-                                start_t += 1
-                                start += 1
-                            else:
-                                end_t += 1
-                                end += 1
-                        input_data = batch[:,it,:,:,start-offset_dif:end+offset_dif].unsqueeze(1)
-                        teacher_data = teacher[:,it,:,:,start_t:end_t].unsqueeze(1)
-                        #display.addLine( str( net.teacher_offset ) +" from " +str( net.offset_list ) )
-                        #display.addLine( str( input_data.size() ) +" <> " +str( teacher_data.size() ) )
-                        display.addComputed( it, jt, num_slices )
+                        input_data = inp[num_slices]
+                        teacher_data = tch[num_slices]
                         
                         #Train
                         output = net( input_data, loss_func.apply_sigmoid )
                         loss, root_loss, soil_loss = loss_func( output, teacher_data, epoch )
                         loss /=( bt_size ) *bt_per_it *num_slices
+                        display.addComputed( it, jt, num_slices )
                         
                         tr_loss += loss
                         loss.backward()
