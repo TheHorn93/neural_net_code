@@ -80,12 +80,12 @@ class Network( nn.Module ):
             self.apply_bt_norm = bt_norm
             if bt_norm:
                 self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
-            self.conv = nn.ConvTranspose3d( num_kernels[0], num_kernels[1], 2, stride=2 )
+            self.conv = nn.Upsample( scale_factor=2, mode='trilinear', align_corners=False  )
             self.activation = activation
             
         def forward( self, inp, res_inp=0 ):
             output = inp
-            return super( Network.Upsample, self ).forward( output )
+            return super( Network.Upsample, self ).forward( output, res_inp )
       
     
     def __init__( self, arg_list, arg_line='' ):

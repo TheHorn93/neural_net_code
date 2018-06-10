@@ -45,7 +45,7 @@ class Instance:
             self.epochs = epochs[0]
             self.data = data
             self.batch_size = batch_size[0]
-            self.slices = slices[0]
+            self.slices = slices
             self.epoch_gates = epoch_gates
             
     def __init__( self, network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates=(None,None) ):

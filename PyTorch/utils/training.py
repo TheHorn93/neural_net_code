@@ -46,18 +46,19 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                     display.addLine( str(offset_dif) )
                     #batch, teacher = loader.getBatch( bt_size )
     
-                display.addBatches( bt_size, num_slices )
+                num_sl = num_slices[0] *num_slices[1] *num_slices[2]
+                display.addBatches( bt_size, num_sl )
                 for it in range( bt_size ):
-                    inp, tch = sd.splitInputAndTeacher( batch[it], teacher[it], num_slices, net.ups )
-                    for jt in range( num_slices ):
-                        input_data = inp[num_slices]
-                        teacher_data = tch[num_slices]
+                    inp, tch = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups )
+                    for jt in range( num_sl ):
+                        input_data = inp[jt]
+                        teacher_data = tch[jt]
                         
                         #Train
                         output = net( input_data, loss_func.apply_sigmoid )
                         loss, root_loss, soil_loss = loss_func( output, teacher_data, epoch )
-                        loss /=( bt_size ) *bt_per_it *num_slices
-                        display.addComputed( it, jt, num_slices )
+                        loss /=( bt_size ) *bt_per_it *num_sl
+                        display.addComputed( it, jt, num_sl )
                         
                         tr_loss += loss
                         loss.backward()
@@ -66,11 +67,11 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                     tr_soil_loss += soil_loss
                 
         #Eval
-        output = net( batch[:,bt_size -1,:,:,:].unsqueeze(1) )
-        loss, _, _ = loss_func( output, teacher[:,bt_size -1,:,:,:].unsqueeze(1), epoch )
+        #output = net( batch[:,bt_size -1,:,:,:].unsqueeze(1) )
+        #loss, _, _ = loss_func( output, teacher[:,bt_size -1,:,:,:].unsqueeze(1), epoch )
            
-        tr_root_loss /= bt_size *bt_per_it *num_slices
-        tr_soil_loss /= bt_size *bt_per_it *num_slices
+        tr_root_loss /= bt_size *bt_per_it *num_sl
+        tr_soil_loss /= bt_size *bt_per_it *num_sl
         opt.step()
 
         display.endEpoch( tr_loss.cpu().data.numpy() )
