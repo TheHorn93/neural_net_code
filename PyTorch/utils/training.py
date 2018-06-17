@@ -82,7 +82,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
             weights = net.getWeights()
             output = feedForward( net, loader, 0 )
             log.logWeights( weights )
-            teacher = loader.getTeacherNp( 0, 4, loader.offset )
+            teacher = loader.getTeacherNp( 0, 4, net.ups, loader.offset )
             f1_r = np.array([0.0,0.0,0.0])
             f1_s = np.array([0.0,0.0,0.0])
             for it in range( 4 ):

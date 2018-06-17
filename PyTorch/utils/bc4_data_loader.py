@@ -197,15 +197,20 @@ class BatchLoader:
         data_list = []
         teacher_list = []
         for it in range( bt_size ):
-            file_str = ( self.input_path +self.r_fac_dic[r_fac_rnd[it]]
+            folder_str = ( self.input_path +self.r_fac_dic[r_fac_rnd[it]]
                          +self.rot_dic[rot_rnd[it]]
                          +self.x_flip_dic[x_flip_rnd[it]]
                          +self.y_flip_dic[y_flip_rnd[it]]
                          +self.swap_dic[swap_rnd[it]]
-                         +"256x256x128/"
                         )
+            file_str = folder_str +"256x256x128/"
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
-            teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
+            if ups:
+                tch_str = file_str + "512x512x256.npy"
+            else:
+                tch_str = file_str + "256x256x128.npy"
+            teacher = np.load( tch_str )[:,0,:,:]
+            print( teacher.shape )
             data_list.append( data.astype( np.float32 ) /255 )
             teacher_list.append( teacher.astype( np.float32 ) /255 )
             
@@ -229,7 +234,7 @@ class BatchLoader:
             
     
     
-    def getTeacherNp( self, bt_nbr, bt_size, offset = 0 ):
+    def getTeacherNp( self, bt_nbr, bt_size, ups, offset = 0 ):
         print( "Loading teacher " +str(bt_nbr) )
         
         r_fac_rnd = np.array( [0,1,2,3] )
@@ -242,15 +247,18 @@ class BatchLoader:
         
         teacher_list = []
         for it in range( bt_size ):
-            file_str = ( self.input_path +self.r_fac_dic[r_fac_rnd[it]]
+            folder_str = ( self.input_path +self.r_fac_dic[r_fac_rnd[it]]
                          +self.rot_dic[rot_rnd[it]]
                          +self.x_flip_dic[x_flip_rnd[it]]
                          +self.y_flip_dic[y_flip_rnd[it]]
                          +self.swap_dic[swap_rnd[it]]
-                         +"256x256x128/"
-                        )
-            print( str(it) +": " + file_str )
-            teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
+                         )
+            if ups:
+                tch_str = folder_str +"512x512x256.npy"
+            else:
+                tch_str = folder_str +"256x256x128.npy"
+            teacher = np.load( tch_str )
+            teacher = np.moveaxis( teacher, 2, 0 )
             teacher_list.append( teacher.astype(np.float32) /255 )
             
         shape = teacher_list[0].shape
