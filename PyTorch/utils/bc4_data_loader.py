@@ -15,7 +15,7 @@ def getFilename( n, c ):
 
 class BatchLoader:
     
-    def __init__( self, input_path, offset, is_cuda = -1 ):
+    def __init__( self, input_path, data_type, offset, is_cuda = -1 ):
         self.input_path = input_path
         #self.teacher_path = teacher_path
         self.offset = int(offset)
@@ -26,10 +26,18 @@ class BatchLoader:
         self.y_flip_dic = ["y_flip_0/","y_flip_1/"]
         self.swap_dic = ["x_y_swap_0/","x_y_swap_1/"]
         self.c_dic = ["g","h","l"]
-        if input_path == "Lupine_22august/":
-            self.fold = "256x256x120/"
-        else:
-            self.fold = "256x256x128/"
+        if data_type == "lupine_22":
+            self.input_path += "Lupine_22august/"
+            self.key = "256x256x120"
+            self.up_key = "512x512x240"
+        elif data_type == "lupine_small":
+            self.input_path += "lupine_small_xml/"
+            self.key = "256x256x128"
+            self.up_key = "512x512x256"
+        elif data_type == "gtk":
+            self.input_path = "gtk/"; 
+            self.key = "183x183x613"
+            self.up_key = "366x366x1226"
             
         
     def getBatchAndUpsampledGT( self, bt_size ):
@@ -60,9 +68,9 @@ class BatchLoader:
                          +self.y_flip_dic[y_flip_rnd[it]]
                          +self.swap_dic[swap_rnd[it]]
                         )
-            file_str = folder_str +"256x256x128/"
+            file_str = folder_str + self.key+"/"
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
-            teacher = np.load( folder_str +"512x512x256.npy" )
+            teacher = np.load( folder_str + self.up_key +".npy" )
             teacher = np.moveaxis( teacher, 2, 0 )
             data_list.append( data.astype(np.float32) /255 )
             teacher_list.append( teacher.astype(np.float32) /255 )
@@ -105,7 +113,7 @@ class BatchLoader:
                          +self.x_flip_dic[x_flip_rnd[it]]
                          +self.y_flip_dic[y_flip_rnd[it]]
                          +self.swap_dic[swap_rnd[it]]
-                         +self.fold
+                         +self.key +"/"
                          )
             print( str(it) +": " + file_str )
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
@@ -159,7 +167,7 @@ class BatchLoader:
                          +self.x_flip_dic[x_flip_rnd[it]]
                          +self.y_flip_dic[y_flip_rnd[it]]
                          +self.swap_dic[swap_rnd[it]]
-                         +"256x256x128/"
+                         + self.key+"/"
                         )
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
             teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
@@ -254,9 +262,9 @@ class BatchLoader:
                          +self.swap_dic[swap_rnd[it]]
                          )
             if ups:
-                tch_str = folder_str +"512x512x256.npy"
+                tch_str = folder_str + self.up_key+".npy"
             else:
-                tch_str = folder_str +"256x256x128.npy"
+                tch_str = folder_str + self.key+".npy"
             teacher = np.load( tch_str )
             teacher = np.moveaxis( teacher, 2, 0 )
             teacher_list.append( teacher.astype(np.float32) /255 )
@@ -277,9 +285,21 @@ class BatchLoader:
 import cv2
 class RealDataLoader:
     
-    def __init__( self, input_path, is_cuda = -1 ):
+    def __init__( self, input_path, data_type, is_cuda = -1 ):
         self.path = input_path
         self.is_cuda = is_cuda
+        if data_type == "lupine_22":
+            self.path += "Lupine_22august/"
+            self.key = "256x256x120"
+            self.up_key = "512x512x240"
+        elif data_type == "lupine_small":
+            self.path += "lupine_small_xml/"
+            self.key = "256x256x128"
+            self.up_key = "512x512x256"
+        elif data_type == "gtk":
+            self.path = "gtk/"; 
+            self.key = "183x183x613"
+            self.up_key = "366x366x1226"
 
     def getDefaultBatch( self, bt_nbr=0, bt_size=0 ):
         print( "Loading from: " + self.path )
@@ -307,3 +327,21 @@ class RealDataLoader:
         output /= 255
         return output
  
+    
+class ValidationLoader:
+    
+    def __init__( self, input_path, data_type, is_cuda = -1 ):
+        self.path = input_path
+        self.is_cuda = is_cuda
+        if data_type == "lupine_22":
+            self.path += "Lupine_22august/"
+            self.key = "256x256x120"
+            self.up_key = "512x512x240"
+        elif data_type == "lupine_small":
+            self.path += "lupine_small_xml/"
+            self.key = "256x256x128"
+            self.up_key = "512x512x256"
+        elif data_type == "gtk":
+            self.path = "gtk/"; 
+            self.key = "183x183x613"
+            self.up_key = "366x366x1226"

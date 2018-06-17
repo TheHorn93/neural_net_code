@@ -66,8 +66,8 @@ class Instance:
         instance_string = "Training: loss="+ str( self.loss ) +", lr=" +str( self.lr ) + ", opt="+ str( self.opt ) +"\n" +"Data: data="+ str( self.data ) +", batch_size=" +str( self.batch_size ) +", slices=" +str( self.slices ) 
         self.log.masterLog( self.net.getStructure(), instance_string )
         self.loaders = []
-        for data_str in self.data:
-            self.loaders.append( data_loader.BatchLoader( input_path +data_str, self.net.teacher_offset, device ) )
+        for data in self.data:
+            self.loaders.append( data_loader.BatchLoader( input_path, data, self.net.teacher_offset, device ) )
         if device is not None:
             self.net.cuda( device )
         training.training( curses_out.Display( stdscr, self.net.getStructure(), instance_string ), self.log, self.net, self.loaders, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
@@ -82,14 +82,7 @@ class Instance:
                 self.loss = losses.CrossEntropyDynamic( epoch_gates[0], epoch_gates[1] )
         if opt == "adam":
             self.opt = optimizer.AdamOptimizer()
-        self.data = []
-        for data_set in data:   
-            if data_set == 'lupine_small':
-                self.data.append( 'lupine_small_xml/' )
-            elif data_set == 'lupine_22':
-                self.data.append( 'Lupine_22august/' )
-            elif data_set == 'gtk':
-                self.data.append( 'gtk/' )
+        self.data = data
         self.epochs = epochs
 
 
@@ -110,26 +103,17 @@ class FeedInstance:
         device = "cuda" # TODO change to command line arg
         if device is not None:
             net.cuda( device )
-            
-        self.data_str = []
-        for data_set in data:   
-            if data_set == 'lupine_small':
-                self.data_str.append( 'lupine_small_xml/' )
-            elif data_set == 'lupine_22':
-                self.data_str.append( 'Lupine_22august/' )
-            elif data_set == 'gtk':
-                self.data_str.append( 'gtk/' )    
         
         if data_usage[0]:
-            for it in range( len(self.data_str)):
-                rd_loader = data_loader.RealDataLoader( real_scan_path +self.data_str[it] , device )
+            for it in range( len(self.data_set)):
+                rd_loader = data_loader.RealDataLoader( real_scan_path, self.data_set[it] , device )
                 output = training.feedForward( net, rd_loader, 0, 1 )
                 self.log.visualizeOutputStack( output[0], epoch_str +"output/", str(it) +"/real/" )
                 self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(it) +"/real/", resize=(128,256,256) )
 
         if data_usage[1]:
-            for lt in range( len(self.data_str)):
-                loader = data_loader.BatchLoader( input_path +self.data_str[lt], net.teacher_offset, device )
+            for lt in range( len(self.data_set)):
+                loader = data_loader.BatchLoader( input_path, self.data_set[lt], net.teacher_offset, device )
                 output = training.feedForward( net, loader )
                 #teacher = loader.getTeacherNp( 0, 4, loaders[lt.offset )
                 for it in range( 4 ):
