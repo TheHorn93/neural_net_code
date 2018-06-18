@@ -84,7 +84,7 @@ class Logger:
         self.vis.line( np.array([root_loss]), ep, win="root_loss", update="append" )
         self.vis.line( np.array([soil_loss]), ep, win="soil_loss", update="append" )
         file = open( self.folder_path + "loss.txt", "a" )
-        file.write( str( epoch ) + ": " + str(train_err) +"\n" )
+        file.write( str( epoch ) + ": " + str(train_err) +", " +str(root_loss) +", " +str(soil_loss) +"\n" )
         file.close()
         
     def logF1Root( self, epoch, f1_t ):
