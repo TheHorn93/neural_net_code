@@ -200,6 +200,13 @@ class Log:
         if not os.path.exists( folder ):
             os.makedirs( folder )
         visualizer.scatterRoot( stack, folder +"scatter.html" )
+        
+    def saveValResults( self, results, path="" ):
+        folder = self.log_path +path
+        print( "Saving validation results to: " + folder )
+        if not os.path.exists( folder ):
+            os.makedirs( folder )
+        np.save( folder + "validation.npy", results )
      
 #a = np.random.rand( 1,1,3,3,3 )
 #a = a.astype(np.float32)

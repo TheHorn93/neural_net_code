@@ -330,18 +330,73 @@ class RealDataLoader:
     
 class ValidationLoader:
     
-    def __init__( self, input_path, data_type, is_cuda = -1 ):
+    class RootKey:
+        def __init__( self, data_type ):
+            if data_type == "lupine_22":
+                self.path = "Lupine_22august/"
+                self.key = "256x256x120"
+                self.up_key = "512x512x240"
+            elif data_type == "lupine_small":
+                self.path = "lupine_small_xml/"
+                self.key = "256x256x128"
+                self.up_key = "512x512x256"
+            elif data_type == "gtk":
+                self.path = "gtk/"; 
+                self.key = "183x183x613"
+                self.up_key = "366x366x1226"
+    
+    def __init__( self, input_path, offset, ups = False, is_cuda = -1 ):
         self.path = input_path
+        self.ups = ups
         self.is_cuda = is_cuda
-        if data_type == "lupine_22":
-            self.path += "Lupine_22august/"
-            self.key = "256x256x120"
-            self.up_key = "512x512x240"
-        elif data_type == "lupine_small":
-            self.path += "lupine_small_xml/"
-            self.key = "256x256x128"
-            self.up_key = "512x512x256"
-        elif data_type == "gtk":
-            self.path = "gtk/"; 
-            self.key = "183x183x613"
-            self.up_key = "366x366x1226"
+        self.offset = int(offset)
+        self.r_fac_dic = ["r_factor_0.34/","r_factor_0.71/","r_factor_1.00/","r_factor_1.41/"]
+        self.rot_dic = ["rot_0/","rot_60/","rot_120/"]
+        self.x_flip_dic = ["x_flip_0/","x_flip_1/"]
+        self.y_flip_dic = ["y_flip_0/","y_flip_1/"]
+        self.swap_dic = ["x_y_swap_0/","x_y_swap_1/"]
+        self.c_dic = ["g","h","l"]
+        self.root_dic = [ self.RootKey( "lupine_small" ), self.RootKey( "lupine_22" ), self.RootKey( "gtk" ) ]
+        
+    def getPair( self, tp, r_fac, rot, x_flip, y_flip, swap, n_type, nbr ):
+        if tp == "lupine_small":
+            root = self.root_dic[0]
+        if tp == "lupine_22":
+            root = self.root_dic[1]
+        if tp == "gtk":
+            root = self.root_dic[2]
+        path = ( self.path 
+                 +root.path 
+                 +self.r_fac_dic[r_fac]
+                 +self.rot_dic[rot]
+                 +self.x_flip_dic[x_flip]
+                 +self.y_flip_dic[y_flip]
+                 +self.swap_dic[swap]
+               )
+        if self.ups:
+            teacher_str = path +root.up_key +".npy"
+        else:
+            teacher_str = path +root.key +".npy"
+        val_str = path +root.key +"/" +getFilename( self.c_dic[n_type], nbr )
+        data = np.load( val_str )[:,0,:,:]
+        teacher = np.load( teacher_str )
+        teacher = np.moveaxis( teacher, 2, 0 )
+        data = data.astype(np.float32) /255
+        teacher = teacher.astype(np.float32) /255
+        
+        shape = data.shape
+        bt_data_size = ( 1, 1, shape[0], shape[1], shape[2] )
+        teacher_data_size = ( 1, 1, shape[0] -int(self.offset*2), shape[1] -int(self.offset*2), shape[2] -int(self.offset*2) )
+        batch = np.empty( bt_data_size )
+        teacher_out = np.empty( teacher_data_size )
+        
+        teacher_out[0,0,:,:,:] = teacher[self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
+        batch[0,0,:,:,:] = data
+        torch_batch = Variable( torch.Tensor(data) )
+        torch_teacher = Variable( torch.Tensor(teacher) )
+        if self.is_cuda is not None:
+            torch_batch = torch_batch.cuda(self.is_cuda)
+            torch_teacher = torch_teacher.cuda(self.is_cuda)
+            
+        return torch_batch, torch_teacher
+
