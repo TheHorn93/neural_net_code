@@ -118,7 +118,7 @@ class Network( nn.Module ):
                     bt_norm = False
                 self.add_module( "conv_" +str(l_it), self.ConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), self.parseAct(args[2]), bt_norm ) )
             elif len( args ) == 5:
-                if args[3] == 'True':
+                if args[4] == 'True':
                     bt_norm = True
                 else:
                     bt_norm = False

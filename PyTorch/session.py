@@ -143,6 +143,7 @@ class Session:
         self.mode = 'add'
         self.net_parser = arg_parser.NetworkParser()
         self.instances = []
+        self.ses_str = ""
             
     def __call__( self ):
         if not self.is_feed:
@@ -202,6 +203,8 @@ class Session:
             net = self.net_parser( args.net )
             new_inst = Instance( ( net.layers, args.net ), args.loss, args.optimizer, args.learning_rate, args.epochs, args.data, args.batch_size, args.slices, args.epoch_gates )
             self.instances.append( new_inst )
+            inst_str = ' '.join( ['-l', args.loss[0], '-o', args.optimizer[0], '-lr', str( args.learning_rate[0] ), '-e', str( args.epochs[0] ), '-eg', str( args.epoch_gates ), '-d', str( args.data ), '-bs', str( args.batch_size[0] ), '-n', ' '.join( args.net ) ] )
+            self.ses_str += inst_str +"\n"
             print( "Adding training instance: " +str( args ) )    
         except SystemExit:
             pass
@@ -217,6 +220,10 @@ class Session:
         
     def runSession( self ):
         print( "Starting Session: " )
+        global logging_path
+        ses_file = open( logging_path +"session.txt", "a" )
+        ses_file.write( self.ses_str )
+        ses_file.close()
         for instance in self.instances:
             curses.wrapper( instance.__call__ )
 

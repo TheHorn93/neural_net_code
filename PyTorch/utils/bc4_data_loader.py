@@ -10,7 +10,7 @@ from torch.autograd import Variable
 import numpy as np
 
 def getFilename( n, c ):
-    return "noisy_" +str(n) +"_" +str(c) +"_new_.npy"
+    return "noisy_" +str(n) +"_" +str(c) +"_.npy"
 
 
 class BatchLoader:
