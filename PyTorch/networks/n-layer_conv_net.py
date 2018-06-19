@@ -7,7 +7,8 @@ Created on Fry May 25 06:41:21 2018
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as funcs        
+import torch.nn.functional as funcs
+import numpy as np
 
 class Network( nn.Module ):
     """Create conv net from cmd-line args"""
@@ -80,13 +81,19 @@ class Network( nn.Module ):
             self.apply_bt_norm = bt_norm
             if bt_norm:
                 self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
-            self.conv = nn.ConvTranspose3d( num_kernels[0], num_kernels[1], 2, stride=2  )
+            self.conv = nn.Upsample( scale_factor = 2, mode='trilinear' )
             self.activation = activation
             
         def forward( self, inp, res_inp=0 ):
             output = inp
             return super( Network.Upsample, self ).forward( output, res_inp )
-      
+        
+        def getParams( self ):
+            return ( np.array( [1] ), np.array( [1] ) )
+        
+        def setParams( self, params ):
+            pass
+        
     
     def __init__( self, arg_list, arg_line='' ):
         super( Network, self ).__init__()
