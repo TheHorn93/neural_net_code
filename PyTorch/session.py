@@ -135,16 +135,16 @@ class Session:
         global debug_mode 
         debug_mode = args.debug[0]
         self.device = args.device[0]
-        session_log = "session_" +time.strftime( "%Y-%m-%d_%H%M%S/" )
-        global logging_path 
-        logging_path += session_log
-        if not os.path.exists( logging_path ):
-            os.makedirs( logging_path )
         if args.mode == "feed":
             self.is_feed = True
             self.parser = arg_parser.FeedParser()
         elif args.mode == "train":
             self.is_feed = False
+            session_log = "session_" +time.strftime( "%Y-%m-%d_%H%M%S/" )
+            global logging_path 
+            logging_path += session_log
+            if not os.path.exists( logging_path ):
+                os.makedirs( logging_path )
             self.parser = arg_parser.TrainParser()
         self.mode = 'add'
         self.net_parser = arg_parser.NetworkParser()
