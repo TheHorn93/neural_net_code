@@ -201,12 +201,20 @@ class Log:
             os.makedirs( folder )
         visualizer.scatterRoot( stack, folder +"scatter.html" )
         
-    def saveValResults( self, results, path="" ):
+    def saveValResults( self, results, dictionary, path="" ):
         folder = self.log_path +path
         print( "Saving validation results to: " + folder )
         if not os.path.exists( folder ):
             os.makedirs( folder )
         np.save( folder + "validation.npy", results )
+        file = open( folder +"validation_score.txt", "a" )
+        file.write( "Key: [loss, root_loss, soil_loss]\n" )
+        for key, dic in dictionary:
+            file.write( key +":\n" )
+            for it_key, val in dic:
+                file.write( "   " +it_key +": " +str(val) +"\n" )
+        file.close();
+        
      
 #a = np.random.rand( 1,1,3,3,3 )
 #a = a.astype(np.float32)

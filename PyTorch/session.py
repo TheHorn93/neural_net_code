@@ -25,6 +25,7 @@ import logger
 import bc4_data_loader as data_loader
 import training
 import curses_out
+import validation
 
 
 logging_path = "/home/work/horn/data/"
@@ -119,7 +120,12 @@ class FeedInstance:
                 for it in range( 4 ):
                     self.log.visualizeOutputStack( output[it], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/" )
                     self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(lt) +"/scan_" +str(it) +"/", resize=(128,256,256) )
-        
+            val_loader = data_loader.ValidationLoader( input_path, net.teacher_offset, net.ups, device )
+            val = validation.ValidationResults()
+            val.validate( net, val_loader )
+            val.fillDictionary()
+            self.log.saveValResults( val.results, val.val_dic, epoch_str )
+            
 
 class Session:
     
