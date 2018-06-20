@@ -13,6 +13,7 @@ class ValidationResult:
 
     def validate( self, net, loader ):
         res_shape = [ 3, 4, 3, 2, 2, 2, 3, 5 ]
+        #res_shape=[2,2,2,2,2,2,2,2]
         num_elems = 3*4*3*2*2*2*3*5
         self.results = [ np.zeros( res_shape ), np.zeros( res_shape ), np.zeros( res_shape ) ]
         loss_func = losses.NegativeLogLikelihood( -1 )
@@ -36,14 +37,16 @@ class ValidationResult:
                                         it += 1
                                         print( str(it) +'/' +str(num_elems), end='\r' )
     
-    def getMean( self, dim=-1 ):
+    def getMean( self, t_it, dim=-1 ):
         output = np.ones( 3 )
         if dim == -1:
             for it in range( 3 ):
                 output[it] = np.mean( self.results[it] )
         else:
             for it in range( 3 ):
-                output[it] = np.mean( self.results[it], dim )
+                dim_list = [x for x in range(8) if x != dim]
+                out = np.mean( self.results[it], tuple( dim_list ) )[t_it]
+                output[it] = out
         return output
     
         
@@ -56,21 +59,21 @@ class ValidationResult:
         self.swap_dic = ["x_y_swap_0","x_y_swap_1"]
         self.c_dic = ["g","h","l"]
         self.val_dic = {}
-        self.val_dic["overall"] = self.getParamDic( self.type, -1 )
+        self.val_dic["overall"] = self.getParamDic( ["overall"], -1 )
         self.val_dic["type"] = self.getParamDic( self.type, 0 )
         self.val_dic["r_fac"] = self.getParamDic( self.r_fac_dic, 1 ) 
         self.val_dic["rot"] = self.getParamDic( self.rot_dic, 2 ) 
         self.val_dic["x_flip"] = self.getParamDic( self.x_flip_dic, 3 ) 
         self.val_dic["y_flip"] = self.getParamDic( self.y_flip_dic, 4 ) 
-        self.val_dic["x_y_swap"] = self.getParamDic( self.swap, 5 ) 
+        self.val_dic["x_y_swap"] = self.getParamDic( self.swap_dic, 5 ) 
         self.val_dic["noise"] = self.getParamDic( self.c_dic, 6 ) 
         
     
     def getParamDic( self, dic, dim ):
         it = 0
         out_dic = {}
-        for t in self.type:
-            out_dic[t] = self.getMean( dim )[it]
+        for t in dic:
+            out_dic[t] = self.getMean( it, dim )
             it += 1
         return out_dic
  

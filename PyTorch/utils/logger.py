@@ -209,9 +209,9 @@ class Log:
         np.save( folder + "validation.npy", results )
         file = open( folder +"validation_score.txt", "a" )
         file.write( "Key: [loss, root_loss, soil_loss]\n" )
-        for key, dic in dictionary:
+        for key, dic in dictionary.items():
             file.write( key +":\n" )
-            for it_key, val in dic:
+            for it_key, val in dic.items():
                 file.write( "   " +it_key +": " +str(val) +"\n" )
         file.close()
         
