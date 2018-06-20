@@ -13,9 +13,11 @@ class ValidationResult:
 
     def validate( self, net, loader ):
         res_shape = [ 3, 4, 3, 2, 2, 2, 3, 5 ]
+        num_elems = 3*4*3*2*2*2*3*5
         self.results = [ np.zeros( res_shape ), np.zeros( res_shape ), np.zeros( res_shape ) ]
         loss_func = losses.NegativeLogLikelihood( -1 )
         roots = ["lupine_small", "lupine_22", "gtk"]
+        it = 0
         for root in range( res_shape[0] ):
             for rad in range( res_shape[1] ):
                 for rot in range( res_shape[2] ):
@@ -25,13 +27,14 @@ class ValidationResult:
                                 for noise in range( res_shape[6] ):
                                     for nbr in range( res_shape[7] ):
                                         batch, teacher = loader.getPair( roots[root], rad, rot, x_flip, y_flip, swap, noise, nbr )
-                                        print(net.children)
                                         output = net( batch )
                                         loss, loss_rt, loss_sl = loss_func( output, teacher, 1 ) 
                                         loss, loss_rt, loss_sl = loss.cpu().data.numpy(), loss_rt.cpu().data.numpy(), loss_sl.cpu().data.numpy()
                                         self.results[0][ root, rad, rot, x_flip, y_flip, swap, noise, nbr ] = loss
                                         self.results[1][ root, rad, rot, x_flip, y_flip, swap, noise, nbr ] = loss_rt
                                         self.results[2][ root, rad, rot, x_flip, y_flip, swap, noise, nbr ] = loss_sl
+                                        it += 1
+                                        print( str(it) +'/' +str(num_elems), end='\r' )
     
     def getMean( self, dim=-1 ):
         output = np.ones( 3 )

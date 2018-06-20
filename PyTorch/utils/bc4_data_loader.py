@@ -392,8 +392,8 @@ class ValidationLoader:
         
         teacher_out[0,0,:,:,:] = teacher[self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
         batch[0,0,:,:,:] = data
-        torch_batch = Variable( torch.Tensor(data) )
-        torch_teacher = Variable( torch.Tensor(teacher) )
+        torch_batch = Variable( torch.Tensor(batch) )
+        torch_teacher = Variable( torch.Tensor(teacher_out) )
         if self.is_cuda is not None:
             torch_batch = torch_batch.cuda(self.is_cuda)
             torch_teacher = torch_teacher.cuda(self.is_cuda)
