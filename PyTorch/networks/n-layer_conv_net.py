@@ -50,7 +50,7 @@ class Network( nn.Module ):
             self.apply_bt_norm = bt_norm
             if bt_norm:
                 self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
-            self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) )
+            self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], kernel_size=( kernel_size, kernel_size, kernel_size ) )
             self.activation = activation
             
         def forward( self, inp, res_list=0 ):

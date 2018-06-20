@@ -377,7 +377,7 @@ class ValidationLoader:
             teacher_str = path +root.up_key +".npy"
         else:
             teacher_str = path +root.key +".npy"
-        val_str = path +root.key +"/" +getFilename( self.c_dic[n_type], nbr )
+        val_str = path +root.key +"/" +getFilename( nbr, self.c_dic[n_type] )
         data = np.load( val_str )[:,0,:,:]
         teacher = np.load( teacher_str )
         teacher = np.moveaxis( teacher, 2, 0 )

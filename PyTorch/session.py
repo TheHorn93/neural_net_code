@@ -98,6 +98,7 @@ class FeedInstance:
         print( "Loading Log: " +self.log.log_path ) 
         epoch_str = "epoch_" +str( self.epoch ) +"/"
         model = self.log.getNetwork()
+        print( "Generating network: " +model )
         net = network.Network( self.net_parser( model.split() ).layers )
         weights = self.log.getWeights( epoch_str )
         net.setWeights( weights )
@@ -106,22 +107,22 @@ class FeedInstance:
             net.cuda( device )
         
         if data_usage[0]:
-            for it in range( len(self.data_set)):
-                rd_loader = data_loader.RealDataLoader( real_scan_path, self.data_set[it] , device )
+            for it in range( len(data)):
+                rd_loader = data_loader.RealDataLoader( real_scan_path, data[it] , device )
                 output = training.feedForward( net, rd_loader, 0, 1 )
                 self.log.visualizeOutputStack( output[0], epoch_str +"output/", str(it) +"/real/" )
                 self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(it) +"/real/", resize=(128,256,256) )
 
         if data_usage[1]:
-            for lt in range( len(self.data_set)):
-                loader = data_loader.BatchLoader( input_path, self.data_set[lt], net.teacher_offset, device )
+            for lt in range( len(data)):
+                loader = data_loader.BatchLoader( input_path, data[lt], net.teacher_offset, device )
                 output = training.feedForward( net, loader )
                 #teacher = loader.getTeacherNp( 0, 4, loaders[lt.offset )
                 for it in range( 4 ):
                     self.log.visualizeOutputStack( output[it], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/" )
                     self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(lt) +"/scan_" +str(it) +"/", resize=(128,256,256) )
             val_loader = data_loader.ValidationLoader( input_path, net.teacher_offset, net.ups, device )
-            val = validation.ValidationResults()
+            val = validation.ValidationResult()
             val.validate( net, val_loader )
             val.fillDictionary()
             self.log.saveValResults( val.results, val.val_dic, epoch_str )
