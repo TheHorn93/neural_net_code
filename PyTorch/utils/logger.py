@@ -213,7 +213,7 @@ class Log:
             file.write( key +":\n" )
             for it_key, val in dic:
                 file.write( "   " +it_key +": " +str(val) +"\n" )
-        file.close();
+        file.close()
         
      
 #a = np.random.rand( 1,1,3,3,3 )

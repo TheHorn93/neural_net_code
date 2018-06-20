@@ -44,6 +44,7 @@ class FeedParser():
         self.run.add_argument("-d", "--data", help="Which type of data to use", nargs='+')
         self.run.add_argument("-r", "--real", help="Use real data as input", action="store_true", default=False )
         self.run.add_argument("-s", "--synth", help="Use synthetic data as input", action="store_true", default=False )
+        self.run.add_argument("-v", "--vali", help="Use validation set as input", action="store_true", default=False )
 
     def __call__( self, inp ):
         return self.parser.parse_args( inp )

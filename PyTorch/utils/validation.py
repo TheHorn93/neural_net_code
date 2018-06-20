@@ -25,6 +25,7 @@ class ValidationResult:
                                 for noise in range( res_shape[6] ):
                                     for nbr in range( res_shape[7] ):
                                         batch, teacher = loader.getPair( roots[root], rad, rot, x_flip, y_flip, swap, noise, nbr )
+                                        print(net.children)
                                         output = net( batch )
                                         loss, loss_rt, loss_sl = loss_func( output, teacher, 1 ) 
                                         loss, loss_rt, loss_sl = loss.cpu().data.numpy(), loss_rt.cpu().data.numpy(), loss_sl.cpu().data.numpy()

@@ -121,6 +121,8 @@ class FeedInstance:
                 for it in range( 4 ):
                     self.log.visualizeOutputStack( output[it], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/" )
                     self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(lt) +"/scan_" +str(it) +"/", resize=(128,256,256) )
+        
+        if data_usage[2]:
             val_loader = data_loader.ValidationLoader( input_path, net.teacher_offset, net.ups, device )
             val = validation.ValidationResult()
             val.validate( net, val_loader )
@@ -169,7 +171,7 @@ class Session:
                 if self.mode == 'show':
                     self.show()
                 elif self.mode == 'run':
-                    self.feedSession( cmd.data, ( cmd.real, cmd.synth ) )
+                    self.feedSession( cmd.data, ( cmd.real, cmd.synth, cmd.vali ) )
                 elif self.mode == 'read':
                     log_list = arg_parser.readFromFile( cmd.input[0] )
                     for arg in log_list:
