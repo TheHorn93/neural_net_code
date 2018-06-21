@@ -81,7 +81,7 @@ class Network( nn.Module ):
             self.apply_bt_norm = bt_norm
             if bt_norm:
                 self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
-            self.conv = nn.Upsample( scale_factor = 2, mode='trilinear' )
+            self.conv = nn.Upsample( scale_factor = 2, mode='trilinear', align_corners=False )
             self.activation = activation
             
         def forward( self, inp, res_inp=0 ):
@@ -89,7 +89,7 @@ class Network( nn.Module ):
             return super( Network.Upsample, self ).forward( output, res_inp )
         
         def getParams( self ):
-            return ( np.array( [1] ), np.array( [1] ) )
+            return ( np.ones( (1,1,1,1,1) ), np.ones( (1,1,1,1,1) ) )
         
         def setParams( self, params ):
             pass
