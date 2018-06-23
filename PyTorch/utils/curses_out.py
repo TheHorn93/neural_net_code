@@ -9,7 +9,7 @@ Created on Fri Jun  1 04:35:15 2018
 import curses
 import timeit
 
-class Display:
+class Display:            
     
     def __init__( self, stdscr, net_string, instance_string ):
         self.screen = stdscr
@@ -27,8 +27,7 @@ class Display:
         self.log_file = open( "./session.log", 'w' )
 
     def __call__( self ):
-        inp = self.screen.getch()
-        return inp != ord( 'q' )
+        self.screen.refresh()
     
     def newEpoch( self, epoch, max_epochs ):
         self.st_pt = timeit.default_timer()
@@ -39,11 +38,15 @@ class Display:
     
     def addBatches( self, bt_nbr, of_slices ):
         for it in range( bt_nbr ):
+            self.screen.move( self.bt_l_it +self.offset, 0 )
+            self.screen.clrtoeol()
             self.screen.addstr( self.bt_l_it, 0, "Batch " +str( it ) +":" )
             self.screen.addstr( self.bt_l_it, 9, " 0/" +str( of_slices ), curses.color_pair(3) )
             self.bt_l_it += 1
     
     def addComputed( self, batch_nbr, slce, of_slices ):
+        self.screen.move( batch_nbr +self.offset, 8 )
+        self.screen.clrtoeol()
         self.screen.addstr( batch_nbr +self.offset, 8, ": " +str( slce +1 ) +"/" +str( of_slices ) )
         self.screen.refresh()
 
@@ -61,3 +64,12 @@ class Display:
         self.screen.addstr( self.offset, 0, line )
         self.log_file.write( line +"\n" )
         self.screen.refresh()
+
+def main( stdscr ):
+    scr = Display( stdscr, "net", "inst" )
+    scr.addBatches(5,10)
+    scr.addComputed(2,2,10)
+    scr.screen.getch()
+
+print("Starting")
+curses.wrapper( main )
