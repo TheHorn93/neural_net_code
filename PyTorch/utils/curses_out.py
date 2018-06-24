@@ -65,11 +65,3 @@ class Display:
         self.log_file.write( line +"\n" )
         self.screen.refresh()
 
-def main( stdscr ):
-    scr = Display( stdscr, "net", "inst" )
-    scr.addBatches(5,10)
-    scr.addComputed(2,2,10)
-    scr.screen.getch()
-
-print("Starting")
-curses.wrapper( main )
