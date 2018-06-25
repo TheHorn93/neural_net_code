@@ -27,19 +27,19 @@ class BatchLoader:
         self.swap_dic = ["x_y_swap_0/","x_y_swap_1/"]
         self.c_dic = ["g","h","l"]
         if data_type == "lupine_22":
-            self.path += "Lupine_22august/"
+            self.input_path += "Lupine_22august/"
             self.key = "256x256x120"
             self.up_key = "512x512x240"
             self.data_size=[120,256,256]
             self.data_size_ups=[240,512,512]
         elif data_type == "lupine_small":
-            self.path += "lupine_small_xml/"
+            self.input_path += "lupine_small_xml/"
             self.key = "256x256x128"
             self.up_key = "512x512x256"
             self.data_size=[128,256,256]
             self.data_size_ups=[256,512,512]
         elif data_type == "gtk":
-            self.path = "gtk/"; 
+            self.input_path = "gtk/"; 
             self.key = "183x183x613"
             self.up_key = "366x366x1226"
             self.data_size=[138,138,613]
