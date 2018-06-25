@@ -111,7 +111,11 @@ class FeedInstance:
                 rd_loader = data_loader.RealDataLoader( real_scan_path, data[it] , device )
                 output = training.feedForward( net, rd_loader, 0, 1 )
                 self.log.visualizeOutputStack( output[0], epoch_str +"output/", str(it) +"/real/" )
-                self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(it) +"/real/", resize=(128,256,256) )
+                if net.ups:
+                    new_size = rd_loader.data_size_ups
+                else:
+                    new_size = rd_loader.data_size
+                self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(it) +"/real/", resize=new_size )
 
         if data_usage[1]:
             for lt in range( len(data)):
@@ -119,8 +123,12 @@ class FeedInstance:
                 output = training.feedForward( net, loader )
                 #teacher = loader.getTeacherNp( 0, 4, loaders[lt.offset )
                 for it in range( 4 ):
+                    if net.ups:
+                        new_size = loader.data_size_ups
+                    else:
+                        new_size = loader.data_size
                     self.log.visualizeOutputStack( output[it], epoch_str +"output/", str(lt) +"/scan_" +str(it) +"/" )
-                    self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(lt) +"/scan_" +str(it) +"/", resize=(128,256,256) )
+                    self.log.saveOutputAsNPY( output[0], epoch_str +"output/" +str(lt) +"/scan_" +str(it) +"/", resize=new_size )
         
         if data_usage[2]:
             val_loader = data_loader.ValidationLoader( input_path, net.teacher_offset, net.ups, device )

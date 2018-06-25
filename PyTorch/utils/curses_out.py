@@ -81,16 +81,16 @@ class Display:
         self.screen.refresh()
 
 
-import time
-def main( stdscr ):
-    scr = Display( stdscr, "net", "inst" )
-    for e in range( 1, 21 ):
-        scr.newEpoch( e, 20 )
-        scr.addBatches( 12, 10 )
-        for it in range( 12 ):
-            for jt in range( 10 ):
-                time.sleep( 0.1 )
-                scr.addComputed( it, jt, 10 )
-        scr.endEpoch( 1 )
+#import time
+#def main( stdscr ):
+#    scr = Display( stdscr, "net", "inst" )
+#    for e in range( 1, 21 ):
+#        scr.newEpoch( e, 20 )
+#        scr.addBatches( 12, 10 )
+#        for it in range( 12 ):
+#            for jt in range( 10 ):
+#                time.sleep( 0.1 )
+#                scr.addComputed( it, jt, 10 )
+#        scr.endEpoch( 1 )
     
-curses.wrapper( main )
+#curses.wrapper( main )

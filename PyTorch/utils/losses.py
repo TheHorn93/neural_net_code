@@ -131,7 +131,18 @@ class CrossEntropyDynamic( LossDynaBase ):
         loss_out = torch.mean( loss_out )
         
         return ( loss_out, root_loss, soil_loss )    
-    
+
+
+loss = NegativeLogLikelihood(0)
+inp = torch.zeros( [1,1,3,3,3] )
+teacher = torch.zeros( [1,1,3,3,3] )
+tc = torch.Tensor( [[[0,0,0],[0,0,0],[0,0,0]],[[1,1,1],[1,1,1],[1,1,1]],[[0,0,0],[0,0,0],[0,0,0]]] )
+teacher[0,0,:,:,:] = tc
+tp = torch.Tensor( [[[0,0,0],[0,0,0],[1,1,1]],[[1,1,1],[1,1,1],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0]]] )
+inp[0,0,:,:,:] = tp
+print( inp )
+print( teacher )
+print(loss( inp, teacher, 1 ))
 #inp = torch.Tensor([[10,5,-10,-10],[-10,10,-10,-10],[-10,-10,10,-10]])
 #inp = torch.Tensor([[0,0,0,0],[0,1,0,0],[0,0,1,0]])
 #teacher = torch.Tensor([[1,0,0,0],[0,1,0,0],[0,0,1,0]])
