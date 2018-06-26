@@ -76,10 +76,11 @@ class BatchLoader:
                         )
             file_str = folder_str + self.key+"/"
             data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
-            teacher = np.load( folder_str + self.up_key +".npy" )
+            teacher = np.load( folder_str + self.up_key +"_occupancy.npz" )["arr_0"]
             teacher = np.moveaxis( teacher, 2, 0 )
             data_list.append( data.astype(np.float32) /255 )
-            teacher_list.append( teacher.astype(np.float32) /255 )
+            teacher = np.where( teacher > 127, 1, 0 )
+            teacher_list.append( teacher.astype(np.float32))
             
         shape = data_list[0].shape
         t_shape = teacher_list[0].shape
@@ -107,7 +108,7 @@ class BatchLoader:
         x_flip_rnd = np.array( [0,0,0,1] )
         y_flip_rnd = np.array( [0,1,0,0] )
         swap_rnd = np.array( [1,1,0,0] )
-        sc_id = np.array( [0,1,2,3] )
+        sc_id = np.array( [4,4,4,4] )
         c_id = np.array( [0,1,0,2] )
         print( "Loading from batches: " )
         
@@ -119,13 +120,14 @@ class BatchLoader:
                          +self.x_flip_dic[x_flip_rnd[it]]
                          +self.y_flip_dic[y_flip_rnd[it]]
                          +self.swap_dic[swap_rnd[it]]
-                         +self.key +"/"
                          )
             print( str(it) +": " + file_str )
-            data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
-            teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
+            data = np.load( file_str +self.key+"/" +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
+            teacher = np.load( file_str + self.key+"_occupancy.npz" )["arr_0"][:,:,:]
+            teacher = np.moveaxis( teacher, 2, 0 )
             data_list.append( data.astype(np.float32) /255 )
-            teacher_list.append( teacher.astype(np.float32) /255 )
+            teacher = np.where( teacher > 127, 1, 0 )
+            teacher_list.append( teacher.astype(np.float32) )
             
         shape = data_list[0].shape
         bt_data_size = ( 1, bt_size, shape[0], shape[1], shape[2] )
@@ -173,12 +175,13 @@ class BatchLoader:
                          +self.x_flip_dic[x_flip_rnd[it]]
                          +self.y_flip_dic[y_flip_rnd[it]]
                          +self.swap_dic[swap_rnd[it]]
-                         + self.key+"/"
                         )
-            data = np.load( file_str +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
-            teacher = np.load( file_str +"ground_truth.npy" )[:,0,:,:]
+            data = np.load( file_str +self.key +"/" +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
+            teacher = np.load( file_str +self.key +"_occupancy.npz" )["arr_0"][:,:,:]
+            teacher = np.moveaxis( teacher, 2, 0 )
             data_list.append( data.astype(np.float32) /255 )
-            teacher_list.append( teacher.astype(np.float32) /255 )
+            teacher = np.where( teacher > 127, 1, 0 )
+            teacher_list.append( teacher.astype(np.float32) )
             
         shape = data_list[0].shape
         bt_data_size = ( 1, bt_size, shape[0], shape[1], shape[2] )
@@ -268,12 +271,13 @@ class BatchLoader:
                          +self.swap_dic[swap_rnd[it]]
                          )
             if ups:
-                tch_str = folder_str + self.up_key+".npy"
+                tch_str = folder_str + self.up_key+"_occupancy.npz"
             else:
-                tch_str = folder_str + self.key+".npy"
-            teacher = np.load( tch_str )
+                tch_str = folder_str + self.key+"_occupancy.npz"
+            teacher = np.load( tch_str )["arr_0"]
             teacher = np.moveaxis( teacher, 2, 0 )
-            teacher_list.append( teacher.astype(np.float32) /255 )
+            teacher = np.where( teacher > 127, 1, 0 )
+            teacher_list.append( teacher.astype(np.float32) )
             
         shape = teacher_list[0].shape
         teacher_data_size = ( 1, bt_size, shape[0]-offset*2, shape[1]-offset*2, shape[2]-offset*2 )
@@ -386,12 +390,12 @@ class ValidationLoader:
                  +self.swap_dic[swap]
                )
         if self.ups:
-            teacher_str = path +root.up_key +".npy"
+            teacher_str = path +root.up_key +"_occupancy.npz"
         else:
-            teacher_str = path +root.key +".npy"
+            teacher_str = path +root.key +"_occupancy.npz"
         val_str = path +root.key +"/" +getFilename( nbr, self.c_dic[n_type] )
         data = np.load( val_str )[:,0,:,:]
-        teacher = np.load( teacher_str )
+        teacher = np.load( teacher_str )["arr_0"]
         teacher = np.moveaxis( teacher, 2, 0 )
         data = data.astype(np.float32) /255
         teacher = teacher.astype(np.float32) /255
