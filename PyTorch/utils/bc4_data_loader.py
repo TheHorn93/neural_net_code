@@ -140,7 +140,7 @@ class BatchLoader:
             batch[0,it,:,:,:] = data_list[it]
             teacher[0,it,:,:,:] = teacher_list[it][self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
         torch_batch = Variable( torch.Tensor(batch) )
-        torch_teacher = Variable( torch.Tensor(teacher) )
+        torch_teacher = Variable( torch.Tensor(teacher ) )
         if self.is_cuda is not None:
             torch_batch = torch_batch.cuda(self.is_cuda)
             torch_teacher = torch_teacher.cuda(self.is_cuda)

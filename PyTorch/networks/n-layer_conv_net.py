@@ -100,6 +100,7 @@ class Network( nn.Module ):
         self.model = ' '.join( arg_line )
         self.ups = False
         self.teacher_offset = 0
+        self.res_dict = {}
         print( "Creating network: " +self.model )
         self.parseArgs( arg_list )
         self.teacher_offset = int( self.teacher_offset )
@@ -131,6 +132,7 @@ class Network( nn.Module ):
                     bt_norm = False
                 res_layer = int( args[3] )
                 res_offset = 0
+                self.res_dict[res_layer] = None
                 for off_it in range( res_layer, l_it ):
                     res_offset += self.offset_list[off_it]
                 self.add_module( "conv_" +str(l_it), self.ResConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), res_layer, res_offset, self.parseAct(args[3]), bt_norm ) )
@@ -174,11 +176,13 @@ class Network( nn.Module ):
 
 
     def forward( self, inp, ff=False ):
-        layer_output = [ inp ]
         output = inp
+        if 0 in self.res_dict.keys():
+            self.res_dict[0] = output
         for idx, layer in enumerate( self.children() ):
-            output = layer( output, layer_output )
-            layer_output.append( output )
+            output = layer( output, self.res_dict )
+            if idx+1 in self.res_dict.keys():
+                self.res_dict[idx+1] = output
         if( ff ):
             output = funcs.sigmoid( output )
         return output

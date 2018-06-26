@@ -8,27 +8,32 @@ Created on Wed May 30 05:19:33 2018
 import evaluator
 import split_data as sd
 import numpy as np
+import torch
 
 def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
     batch, _ = loader.getDefaultBatch( bt_nbr, bt_size )
+    batch.requires_grad=False
     out_list = []
     for it in range( bt_size ):
+        print(it)
         input_data = batch[:,it,:,:,:].unsqueeze(1)
         output = net( input_data, True )
-        output = output.cpu().data.numpy()
-        out_list.append( output )
+        output_cp = output.cpu().data.numpy()
+        del output
+        out_list.append( output_cp )
     return out_list
 
 
 def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, bt_size, num_slices ):
     evle = evaluator.F1Score()
     opt = optimizer( net, lr )
-    
+    opt.zero_grad()
+
     for epoch in range( 1, epochs+1 ):
         tr_loss = 0.0
         tr_root_loss = 0.0
         tr_soil_loss = 0.0
-        opt.zero_grad()
+        #opt.zero_grad()
         
         display.newEpoch( epoch, epochs )
         for loader in loader_list:
@@ -65,7 +70,12 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
     
                     tr_root_loss += root_loss
                     tr_soil_loss += soil_loss
+
+                    del inp
+                    del tch
                 
+                del batch
+                del teacher
         #Eval
         #output = net( batch[:,bt_size -1,:,:,:].unsqueeze(1) )
         #loss, _, _ = loss_func( output, teacher[:,bt_size -1,:,:,:].unsqueeze(1), epoch )
@@ -73,13 +83,19 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
         tr_root_loss /= bt_size *bt_per_it *num_sl
         tr_soil_loss /= bt_size *bt_per_it *num_sl
         opt.step()
+        opt.zero_grad()
 
         display.endEpoch( tr_loss.cpu().data.numpy() )
         
         #Log
-        log.logEpoch( epoch, tr_loss.cpu().data.numpy(), 0, tr_root_loss.cpu().data.numpy(), tr_soil_loss.cpu().data.numpy() )
+        cpu_loss = tr_loss.cpu().data.numpy()
+        log.logEpoch( epoch, cpu_loss, 0, tr_root_loss.cpu().data.numpy(), tr_soil_loss.cpu().data.numpy() )
+        del tr_loss
+        del tr_root_loss
+        del tr_soil_loss
         if( epoch %20 == 0):
             weights = net.getWeights()
+            torch.cuda.empty_cache()
             output = feedForward( net, loader, 0 )
             log.logWeights( weights )
             teacher = loader.getTeacherNp( 0, 4, net.ups, loader.offset )
@@ -91,4 +107,4 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
             log.logF1Root( epoch, f1_r /4 )
             log.logF1Soil( epoch, f1_s /4 )
             if( epoch %100 == 0 ): 
-                log.logMilestone( epoch, weights, output, tr_loss, f1_r, f1_s )
+                log.logMilestone( epoch, weights, output, cpu_loss, f1_r, f1_s )
