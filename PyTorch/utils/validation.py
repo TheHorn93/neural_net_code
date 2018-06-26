@@ -44,9 +44,8 @@ class ValidationResult:
                 output[it] = np.mean( self.results[it] )
         else:
             for it in range( 3 ):
-                dim_list = [x for x in range(8) if x != dim]
-                out = np.mean( self.results[it], tuple( dim_list ) )[t_it]
-                output[it] = out
+                slide = np.take( self.results, t_it, dim )
+                output[it] = np.mean( slide )
         return output
     
         
