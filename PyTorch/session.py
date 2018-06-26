@@ -94,14 +94,15 @@ class LogInstance( Instance ):
     
     def __init__( self, log, network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates=(None,None) ):
         self.log = logger.Log( raw_lg_path +log[0] +"/" )
-        self.epoch_str = "epoch_" +str( self.epoch ) +"/"
-        super( LogInstance, self ).__init__( network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates=(None,None) )
+        self.epoch_str = "epoch_" +str( log[1] ) +"/"
+        self.net_parser = arg_parser.NetworkParser()
+        super( LogInstance, self ).__init__( network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates )
     
     def __call__( self, stdscr ):
         model = self.log.getNetwork()
-        net = network.Network( self.net_parser( model.split() ).layers )
+        self.net = network.Network( self.net_parser( model.split() ).layers )
         weights = self.log.getWeights( self.epoch_str )
-        net.setWeights( weights )
+        self.net.setWeights( weights )
         super( LogInstance, self ).run( stdscr )
 
 class FeedInstance:
