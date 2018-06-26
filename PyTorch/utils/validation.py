@@ -44,7 +44,7 @@ class ValidationResult:
                 output[it] = np.mean( self.results[it] )
         else:
             for it in range( 3 ):
-                slide = np.take( self.results, t_it, dim )
+                slide = np.take( self.results[it], t_it, dim )
                 output[it] = np.mean( slide )
         return output
     
