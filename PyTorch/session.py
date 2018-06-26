@@ -209,7 +209,10 @@ class Session:
                     for arg in net_list:
                         print(arg)
                         new_inst = self.parser( arg.split() )
-                        self.addInstance( new_inst )
+                        if arg.net != False:
+                            self.addInstance( new_inst )
+                        else:
+                            self.addInstanceFromLog( new_inst )
             except SystemExit:
                 pass
           
@@ -226,10 +229,24 @@ class Session:
         except SystemExit:
             pass
 
-    def addInstanceFromLog( self, log_file ):
+    def addInstanceFromLog( self, args ):
         """ Load line and send to add Network """
-        print( "Loading from: " +log_file[0] )
-        self.addNetwork( "fromlogfile" )
+        try:
+            log = logger.Log( logging_path +self.net_parser( args.log[0] ) +"/" )
+            print( "Loading Log: " +log.log_path ) 
+            epoch_str = "epoch_" +str( args.log[1] ) +"/"
+            model = log.getNetwork()
+            print( "Generating network: " +model )
+            net = network.Network( self.net_parser( model.split() ).layers )
+            weights = self.log.getWeights( epoch_str )
+            net.setWeights( weights )
+            new_inst = Instance( ( net.layers, args.net ), args.loss, args.optimizer, args.learning_rate, args.epochs, args.data, args.batch_size, args.slices, args.epoch_gates )
+            self.instances.append( new_inst )
+            inst_str = ' '.join( ['-l', args.loss[0], '-o', args.optimizer[0], '-lr', str( args.learning_rate[0] ), '-e', str( args.epochs[0] ), '-eg', str( args.epoch_gates ), '-d', str( args.data ), '-bs', str( args.batch_size[0] ), '-n', ' '.join( args.net ) ] )
+            self.ses_str += inst_str +"\n"
+            print( "Adding training instance: " +str( args ) )    
+        except SystemExit:
+            pass
         
     def show( self ):
         for net_string in self.instances:
