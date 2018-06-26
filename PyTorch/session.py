@@ -100,7 +100,7 @@ class LogInstance( Instance ):
     
     def __call__( self, stdscr ):
         model = self.log.getNetwork()
-        self.net = network.Network( self.net_parser( model.split() ).layers )
+        self.net = network.Network( self.net_parser( model.split() ).layers, [model] )
         weights = self.log.getWeights( self.epoch_str )
         self.net.setWeights( weights )
         super( LogInstance, self ).run( stdscr )

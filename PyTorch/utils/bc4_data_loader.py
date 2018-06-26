@@ -110,7 +110,7 @@ class BatchLoader:
         swap_rnd = np.array( [1,1,0,0] )
         sc_id = np.array( [4,4,4,4] )
         c_id = np.array( [0,1,0,2] )
-        print( "Loading from batches: " )
+        #print( "Loading from batches: " )
         
         data_list = []
         teacher_list = []
@@ -121,7 +121,7 @@ class BatchLoader:
                          +self.y_flip_dic[y_flip_rnd[it]]
                          +self.swap_dic[swap_rnd[it]]
                          )
-            print( str(it) +": " + file_str )
+            #print( str(it) +": " + file_str )
             data = np.load( file_str +self.key+"/" +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
             teacher = np.load( file_str + self.key+"_occupancy.npz" )["arr_0"][:,:,:]
             teacher = np.moveaxis( teacher, 2, 0 )
@@ -252,7 +252,7 @@ class BatchLoader:
     
     
     def getTeacherNp( self, bt_nbr, bt_size, ups, offset = 0 ):
-        print( "Loading teacher " +str(bt_nbr) )
+        #print( "Loading teacher " +str(bt_nbr) )
         
         r_fac_rnd = np.array( [0,1,2,3] )
         rot_rnd = np.array( [0,1,0,2] )

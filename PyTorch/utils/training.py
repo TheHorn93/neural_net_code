@@ -15,7 +15,7 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4 ):
     batch.requires_grad=False
     out_list = []
     for it in range( bt_size ):
-        print(it)
+        #print(it)
         input_data = batch[:,it,:,:,:].unsqueeze(1)
         output = net( input_data, True )
         output_cp = output.cpu().data.numpy()

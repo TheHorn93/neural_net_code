@@ -103,7 +103,12 @@ def readFromFile( file_path ):
     print( "Reading from: " +file_path  )
     with open( file_path,'r' ) as file:
         arg_list = ( file.read().split('\n') )
-    return arg_list[:-1]
+    arg_list =arg_list[:-1]
+    out_list = []
+    for arg in arg_list:
+        if arg[0] != '#':
+            out_list.append( arg )
+    return out_list
         
 #par = TrainParser()
 #print( par( "add -d l -e 200 -lr 0.-l test 200".split() ) )
