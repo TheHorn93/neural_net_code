@@ -55,12 +55,15 @@ class Instance:
         
     def __call__( self, stdscr ):
         print( "Creating training instance" )
+        self.net = network.Network( self.proto_set.network_set[0], self.proto_set.network_set[1] )
+        self.run( stdscr )
+        
+    def run( self, stdscr ):
         device = "cuda"
         self.parseArgs( self.proto_set.loss, self.proto_set.opt, self.proto_set.epochs, self.proto_set.data, self.proto_set.epoch_gates )
         self.lr = self.proto_set.lr
         self.batch_size = self.proto_set.batch_size
         self.slices = self.proto_set.slices
-        self.net = network.Network( self.proto_set.network_set[0], self.proto_set.network_set[1] )
         if debug_mode:
             self.log = logger.DummyLogger( logging_path )
         else:
@@ -87,6 +90,19 @@ class Instance:
         self.data = data
         self.epochs = epochs
 
+class LogInstance( Instance ):
+    
+    def __init__( self, log, network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates=(None,None) ):
+        self.log = logger.Log( raw_lg_path +log[0] +"/" )
+        self.epoch_str = "epoch_" +str( self.epoch ) +"/"
+        super( LogInstance, self ).__init__( network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates=(None,None) )
+    
+    def __call__( self, stdscr ):
+        model = self.log.getNetwork()
+        net = network.Network( self.net_parser( model.split() ).layers )
+        weights = self.log.getWeights( self.epoch_str )
+        net.setWeights( weights )
+        super( LogInstance, self ).run( stdscr )
 
 class FeedInstance:
     
@@ -235,17 +251,9 @@ class Session:
     def addInstanceFromLog( self, args ):
         """ Load line and send to add Network """
         try:
-            log = logger.Log( raw_lg_path +args.log[0] +"/" )
-            print( "Loading Log: " +args.log[0] ) 
-            epoch_str = "epoch_" +str( args.log[1] ) +"/"
-            model = log.getNetwork()
-            print( "Generating network: " +model )
-            net = network.Network( self.net_parser( model.split() ).layers )
-            weights = log.getWeights( epoch_str )
-            net.setWeights( weights )
-            new_inst = Instance( ( model, args.net ), args.loss, args.optimizer, args.learning_rate, args.epochs, args.data, args.batch_size, args.slices, args.epoch_gates )
+            new_inst = LogInstance( args.log, ( "", "" ), args.loss, args.optimizer, args.learning_rate, args.epochs, args.data, args.batch_size, args.slices, args.epoch_gates )
             self.instances.append( new_inst )
-            inst_str = ' '.join( ['-l', args.loss[0], '-o', args.optimizer[0], '-lr', str( args.learning_rate[0] ), '-e', str( args.epochs[0] ), '-eg', str( args.epoch_gates ), '-d', str( args.data ), '-bs', str( args.batch_size[0] ), '-n', ' '.join( model ) ] )
+            inst_str = ' '.join( ['-l', args.loss[0], '-o', args.optimizer[0], '-lr', str( args.learning_rate[0] ), '-e', str( args.epochs[0] ), '-eg', str( args.epoch_gates ), '-d', str( args.data ), '-bs', str( args.batch_size[0] ), '-n', "Revisited Network" ] )
             self.ses_str += inst_str +"\n"
             print( "Adding training instance: " +str( args ) )    
         except SystemExit:
