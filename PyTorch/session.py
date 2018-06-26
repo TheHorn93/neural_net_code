@@ -29,6 +29,7 @@ import validation
 
 
 logging_path = "/home/work/horn/data/"
+raw_lg_path = logging_path
 input_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
 real_scan_path = "/home/work/uzman/Real_MRI/manual-reconstruction/"
 
@@ -196,9 +197,12 @@ class Session:
                 cmd = self.parser( new_cmd.split() )
                 self.mode = cmd.mode
                 if self.mode == 'add':
-                    if cmd.net is not None:
+                    print("NET: " +str(cmd.net))
+                    if cmd.net is not False:
+                        print( "Adding new network" )
                         self.addInstance( cmd )
                     elif cmd.log is not None:
+                        print( "Adding from log" )
                         self.addInstanceFromLog( cmd )
                 if self.mode == 'show':
                     self.show()
@@ -207,9 +211,8 @@ class Session:
                 elif self.mode == 'read':
                     net_list = arg_parser.readFromFile( cmd.input[0] )
                     for arg in net_list:
-                        print(arg)
                         new_inst = self.parser( arg.split() )
-                        if arg.net != False:
+                        if new_inst.net != False:
                             self.addInstance( new_inst )
                         else:
                             self.addInstanceFromLog( new_inst )
@@ -232,17 +235,17 @@ class Session:
     def addInstanceFromLog( self, args ):
         """ Load line and send to add Network """
         try:
-            log = logger.Log( logging_path +self.net_parser( args.log[0] ) +"/" )
-            print( "Loading Log: " +log.log_path ) 
+            log = logger.Log( raw_lg_path +args.log[0] +"/" )
+            print( "Loading Log: " +args.log[0] ) 
             epoch_str = "epoch_" +str( args.log[1] ) +"/"
             model = log.getNetwork()
             print( "Generating network: " +model )
             net = network.Network( self.net_parser( model.split() ).layers )
-            weights = self.log.getWeights( epoch_str )
+            weights = log.getWeights( epoch_str )
             net.setWeights( weights )
-            new_inst = Instance( ( net.layers, args.net ), args.loss, args.optimizer, args.learning_rate, args.epochs, args.data, args.batch_size, args.slices, args.epoch_gates )
+            new_inst = Instance( ( model, args.net ), args.loss, args.optimizer, args.learning_rate, args.epochs, args.data, args.batch_size, args.slices, args.epoch_gates )
             self.instances.append( new_inst )
-            inst_str = ' '.join( ['-l', args.loss[0], '-o', args.optimizer[0], '-lr', str( args.learning_rate[0] ), '-e', str( args.epochs[0] ), '-eg', str( args.epoch_gates ), '-d', str( args.data ), '-bs', str( args.batch_size[0] ), '-n', ' '.join( args.net ) ] )
+            inst_str = ' '.join( ['-l', args.loss[0], '-o', args.optimizer[0], '-lr', str( args.learning_rate[0] ), '-e', str( args.epochs[0] ), '-eg', str( args.epoch_gates ), '-d', str( args.data ), '-bs', str( args.batch_size[0] ), '-n', ' '.join( model ) ] )
             self.ses_str += inst_str +"\n"
             print( "Adding training instance: " +str( args ) )    
         except SystemExit:
