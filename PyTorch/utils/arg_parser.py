@@ -61,6 +61,7 @@ class TrainParser():
         self.type_gr = self.add.add_mutually_exclusive_group( required=True )
         self.type_gr.add_argument("-n", "--net", help="Create new network with parameters" , nargs=argparse.REMAINDER, default=False )
         self.type_gr.add_argument("-l", "--log", help="Load network from logfile", nargs=2 )
+        self.add.add_argument( "-res", "--rescale", help="Rescale net weights", nargs=1, default=[1.0] )
         self.add.add_argument( "-d", "--data", help="Root type used for training", nargs='+', required=True )
         self.add.add_argument( "-lr", "--learning_rate", help="Network learning rate", nargs=1, type=float, required=True )
         self.add.add_argument( "-e", "--epochs", help="Epochs to train", nargs=1, type=int, required=True )

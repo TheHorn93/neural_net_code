@@ -7,7 +7,51 @@ Created on Sun Jun 10 21:21:45 2018
 """
 
 import math
+import numpy as np
 
+def reassemble( split_list, num_splits ):
+    size = [ 1, 1, 0, 0, 0 ]
+    list_it = 0
+    x_split = num_splits[2] *num_splits[1]
+    y_split = num_splits[2]
+    for dim0 in range( num_splits[0] ):
+        elem = split_list[list_it]
+        size[2] += elem.size()[2]
+        list_it += x_split
+    list_it = 0
+    for dim1 in range( num_splits[1] ):
+        elem = split_list[list_it]
+        size[3] += elem.size()[3]
+        list_it += y_split
+    list_it = 0
+    for dim2 in range( num_splits[2] ):
+        elem = split_list[list_it]
+        size[4] += elem.size()[4]
+        list_it += 1
+    print(size)
+    out = np.zeros( size )
+    pos_x = 0
+    list_it = 0
+    elem = split_list[list_it]
+    for dim0 in range( num_splits[0] ):
+        n_pos_x = pos_x +elem.size()[2]
+        pos_y = 0
+        for dim1 in range( num_splits[1] ):
+            n_pos_y = pos_y +elem.size()[3]
+            pos_z = 0
+            for dim2 in range( num_splits[2] ):
+                elem = split_list[list_it]
+                n_pos_z = pos_z +elem.size()[4]
+                #print( "IT: " + str(dim0) + ", " +str(dim1) +", " +str(dim2) )
+                #print( str(pos_x) +"-" +str( n_pos_x ) + "  " +str(pos_y) +"-" +str( n_pos_y ) + "  " +str(pos_z) +"-" +str( n_pos_z )  )
+                out[ 0, 0 ,pos_x : n_pos_x, pos_y : n_pos_y, pos_z : n_pos_z ] = elem 
+                list_it += 1
+                pos_z = n_pos_z
+            pos_y = n_pos_y
+        pos_x = n_pos_x
+    return out
+                
+                
 def splitInputAndTeacher( tensor, teacher, num_splits, ups=False ): 
     if not ups:
         offset = tensor.size()[2] -teacher.size()[2]
@@ -68,3 +112,15 @@ def split( tensor, x_split, y_split, z_split ):
 #print( "" )
 #for t in teacher:
 #    print(t.size())
+#import numpy as np
+#import torch
+#a = torch.rand( 1,1,200,200,100 )
+#print(a)
+##a = np.random.randint( 10, size=(1,1,10,10,10) )
+#splits = [15,20,8]
+#spl = splitInputAndTeacher( a, a, splits )
+#spl_np = []
+#for sp in spl[0]:
+#    spl_np.append( sp.data.numpy() )
+#out = reassemble( spl[0], splits )
+#print( out -a )

@@ -11,6 +11,9 @@ import losses
 
 class ValidationResult:
 
+    def load( self, results ):
+        self.results = results
+    
     def validate( self, net, loader ):
         res_shape = [ 3, 4, 3, 2, 2, 2, 3, 5 ]
         #res_shape=[2,2,2,2,2,2,2,2]

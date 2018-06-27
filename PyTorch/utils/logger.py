@@ -164,7 +164,11 @@ class Log:
             it += 1
         print( "Got " + str(len(weight_list)) + " set of weights" )
         return weight_list
-              
+        
+    def getValidation( self, path="" ):
+        print( "Loading validation.npy from: " +self.log_path +path )
+        
+      
     def visualizeOutputStack( self, input_data, path="", output_folder = "output/" ):
         out_path = self.log_path + path
         folder = out_path +output_folder

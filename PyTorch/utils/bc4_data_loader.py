@@ -46,13 +46,16 @@ class BatchLoader:
             self.data_size_ups=[366,366,1226]
             
         
-    def getBatchAndUpsampledGT( self, bt_size ):
+    def getBatchAndUpsampledGT( self, bt_size, snr=-1 ):
         r_fac_rnd = np.zeros( [bt_size], dtype=np.int32 )
         rot_rnd = np.random.randint( 3, size=bt_size )
         x_flip_rnd = np.random.randint( 2, size=bt_size )
         y_flip_rnd = np.random.randint( 2, size=bt_size )
         swap_rnd = np.random.randint( 2, size=bt_size )
-        sc_id = np.random.randint( 5, size=bt_size )
+        if snr == -1:
+            sc_id = np.random.randint( 5, size=bt_size )
+        else:
+            sc_id = np.full( bt_size, snr, dtype=np.int32 )
         c_id = np.zeros( [bt_size], dtype=np.int32 )
         
         r_ct = 0
@@ -148,13 +151,16 @@ class BatchLoader:
         return torch_batch, torch_teacher
     
     
-    def getBatch( self, bt_size ):
+    def getBatch( self, bt_size, snr = -1 ):
         r_fac_rnd = np.zeros( [bt_size], dtype=np.int32 )
         rot_rnd = np.random.randint( 3, size=bt_size )
         x_flip_rnd = np.random.randint( 2, size=bt_size )
         y_flip_rnd = np.random.randint( 2, size=bt_size )
         swap_rnd = np.random.randint( 2, size=bt_size )
-        sc_id = np.random.randint( 5, size=bt_size )
+        if snr == -1:
+            sc_id = np.random.randint( 5, size=bt_size )
+        else:
+            sc_id = np.full( bt_size, snr, dtype=np.int32 )
         c_id = np.zeros( [bt_size], dtype=np.int32 )
         
         r_ct = 0
