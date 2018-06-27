@@ -15,7 +15,7 @@ class SessionArgumentParser( ):
         self.parser = argparse.ArgumentParser()
         self.mode = self.parser.add_subparsers( help="Command modes" )
         self.parser.add_argument( "-d", "--device", help="Device to run", nargs=1, default=["cuda"] )
-        self.parser.add_argument( "-de", "--debug", help="Disable hard-drive logging", default = [False], action="store_true" )
+        self.parser.add_argument( "-de", "--debug", help="Disable hard-drive logging", default = False, action="store_true" )
         self.feed = self.mode.add_parser( "feed", help="Feed pretrained network" )
         self.feed.set_defaults( mode="feed" )        
         self.train = self.mode.add_parser( "train", help="Train network" )

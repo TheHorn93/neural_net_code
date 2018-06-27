@@ -162,7 +162,7 @@ class Session:
         parser = arg_parser.SessionArgumentParser() 
         args = parser( inp )
         global debug_mode 
-        debug_mode = args.debug[0]
+        debug_mode = args.debug
         self.device = args.device[0]
         if args.mode == "feed":
             self.is_feed = True

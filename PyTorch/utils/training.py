@@ -97,7 +97,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
         del tr_loss
         del tr_root_loss
         del tr_soil_loss
-        if( epoch %5 == 0):
+        if( epoch %1 == 0):
             weights = net.getWeights()
             torch.cuda.empty_cache()
             output = feedForward( net, loader, 0 )
@@ -110,5 +110,5 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                 f1_s += evle( output[it][0,0,:,:,:], teacher[0,it,:,:,:], True )
             log.logF1Root( epoch, f1_r /4 )
             log.logF1Soil( epoch, f1_s /4 )
-            if( epoch %20 == 0 ): 
+            if( epoch %1 == 0 ): 
                 log.logMilestone( epoch, weights, output, cpu_loss, f1_r, f1_s )
