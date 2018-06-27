@@ -9,6 +9,7 @@ import evaluator
 import split_data as sd
 import numpy as np
 import torch
+from random import shuffle
 
 def feedForward( net, loader, bt_nbr = 0, bt_size = 4, num_slices=[1,1,1] ):
     batch, teacher = loader.getDefaultBatch( bt_nbr, bt_size )
@@ -43,7 +44,9 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
             
             bt_per_it = 1
             for bt_it in range( bt_per_it ):
-                for noise_it in range( 5 ):
+                noise_list = [x for x in range(5)]
+                noise_list.shuffle()
+                for noise_it in noise_list:
                 #Load Data
                 #bt_nbr = np.random.randint( num_bts )
                     if not net.ups:
@@ -56,7 +59,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                         #batch, teacher = loader.getBatch( bt_size )
         
                     num_sl = num_slices[0] *num_slices[1] *num_slices[2]
-                    display.addBatches( bt_size, num_sl )
+                    display.addBatches( bt_size, num_sl, noise_it )
                     for it in range( bt_size ):
                         inp, tch = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups )
                         for jt in range( num_sl ):
@@ -77,7 +80,10 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
     
                         del inp
                         del tch
-                    
+                        
+                    opt.step()
+                    opt.zero_grad()
+                    display.endBatch()
                     del batch
                     del teacher
         #Eval
@@ -86,8 +92,6 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
            
         tr_root_loss /= bt_size *bt_per_it *num_sl *5
         tr_soil_loss /= bt_size *bt_per_it *num_sl *5
-        opt.step()
-        opt.zero_grad()
 
         display.endEpoch( tr_loss.cpu().data.numpy() )
         
