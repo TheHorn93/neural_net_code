@@ -43,7 +43,7 @@ def reassemble( split_list, num_splits ):
                 elem = split_list[list_it]
                 n_pos_z = pos_z +elem.size()[4]
                 #print( "IT: " + str(dim0) + ", " +str(dim1) +", " +str(dim2) )
-                #print( str(pos_x) +"-" +str( n_pos_x ) + "  " +str(pos_y) +"-" +str( n_pos_y ) + "  " +str(pos_z) +"-" +str( n_pos_z )  )
+                print( str(pos_x) +"-" +str( n_pos_x ) + "  " +str(pos_y) +"-" +str( n_pos_y ) + "  " +str(pos_z) +"-" +str( n_pos_z )  )
                 out[ 0, 0 ,pos_x : n_pos_x, pos_y : n_pos_y, pos_z : n_pos_z ] = elem 
                 list_it += 1
                 pos_z = n_pos_z

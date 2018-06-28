@@ -16,15 +16,15 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4, num_slices=[1,1,1] ):
     batch.requires_grad=False
     out_list = []
     for it in range( bt_size ):
-        input_data = batch[:,it,:,:,:].unsqueeze(1)
-        #split_list, _ = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups ) 
-        #out_cpu_list = []
-        #for input_data in split_list:
+        #input_data = batch[:,it,:,:,:].unsqueeze(1)
+        split_list, _ = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups ) 
+        out_cpu_list = []
+        for input_data in split_list:
         #print(it)
-        output = net( input_data, True )
-        #out_cpu_list.append( output.cpu() )
-        #del split_list
-        out_list.append( output )
+            output = net( input_data, True )
+            out_cpu_list.append( output.cpu() )
+        del split_list
+        out_list.append( sd.reassemble( out_cpu_list, num_slices ) )
         del output
     return out_list
 
