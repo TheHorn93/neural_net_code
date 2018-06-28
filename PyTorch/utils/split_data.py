@@ -7,7 +7,7 @@ Created on Sun Jun 10 21:21:45 2018
 """
 
 import math
-import numpy as np
+import torch
 
 def reassemble( split_list, num_splits ):
     size = [ 1, 1, 0, 0, 0 ]
@@ -29,7 +29,7 @@ def reassemble( split_list, num_splits ):
         size[4] += elem.size()[4]
         list_it += 1
     print(size)
-    out = np.zeros( size )
+    out = torch.zeros( size )
     pos_x = 0
     list_it = 0
     elem = split_list[list_it]

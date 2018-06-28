@@ -16,15 +16,16 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4, num_slices=[1,1,1] ):
     batch.requires_grad=False
     out_list = []
     for it in range( bt_size ):
-        split_list, _ = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups ) 
-        out_cpu_list = []
-        for input_data in split_list:
+        input_data = batch[:,it,:,:,:].unsqueeze(1)
+        #split_list, _ = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups ) 
+        #out_cpu_list = []
+        #for input_data in split_list:
         #print(it)
-            output = net( input_data, True )
-            out_cpu_list( output.cpu() )
-            del output
-        del split_list
-        out_list.append( sd.reassmble( out_cpu_list, num_slices ).data.numpy() )
+        output = net( input_data, True )
+        #out_cpu_list.append( output.cpu() )
+        #del split_list
+        out_list.append( output )
+        del output
     return out_list
 
 
@@ -39,13 +40,13 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
         tr_soil_loss = 0.0
         #opt.zero_grad()
         
-        display.newEpoch( epoch, epochs )
+        display.newEpoch( epoch, epochs, 5 )
         for loader in loader_list:
             
             bt_per_it = 1
             for bt_it in range( bt_per_it ):
-                noise_list = [x for x in range(5)]
-                noise_list.shuffle()
+                noise_list = [x for x in range(1)]
+                shuffle( noise_list )
                 for noise_it in noise_list:
                 #Load Data
                 #bt_nbr = np.random.randint( num_bts )
@@ -55,11 +56,12 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                     else:
                         batch, teacher = loader.getBatchAndUpsampledGT( bt_size, noise_it )
                         offset_dif = int( ( batch.size()[4] -teacher.size()[4] /2 ) /2 )
-                        display.addLine( str(offset_dif) )
+                        #display.addLine( str(offset_dif) )
                         #batch, teacher = loader.getBatch( bt_size )
         
                     num_sl = num_slices[0] *num_slices[1] *num_slices[2]
                     display.addBatches( bt_size, num_sl, noise_it )
+                    bt_loss = 0
                     for it in range( bt_size ):
                         inp, tch = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups )
                         for jt in range( num_sl ):
@@ -72,20 +74,26 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                             loss /=( bt_size ) *bt_per_it *num_sl
                             display.addComputed( it, jt, num_sl )
                             
-                            tr_loss += loss
+                            bt_loss += loss.cpu().data.numpy()
+                            tr_loss += loss.cpu().data.numpy()
                             loss.backward()
         
-                        tr_root_loss += root_loss
-                        tr_soil_loss += soil_loss
+                        tr_root_loss += root_loss.cpu().data.numpy()
+                        tr_soil_loss += soil_loss.cpu().data.numpy()
     
                         del inp
                         del tch
+                        del root_loss
+                        del soil_loss
+                        del loss
                         
-                    opt.step()
-                    opt.zero_grad()
-                    display.endBatch()
+                    display.endBatch( bt_loss )
                     del batch
                     del teacher
+                    torch.cuda.empty_cache()
+
+                opt.step()
+                opt.zero_grad()
         #Eval
         #output = net( batch[:,bt_size -1,:,:,:].unsqueeze(1) )
         #loss, _, _ = loss_func( output, teacher[:,bt_size -1,:,:,:].unsqueeze(1), epoch )
@@ -93,11 +101,11 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
         tr_root_loss /= bt_size *bt_per_it *num_sl *5
         tr_soil_loss /= bt_size *bt_per_it *num_sl *5
 
-        display.endEpoch( tr_loss.cpu().data.numpy() )
+        display.endEpoch( tr_loss /5 )
         
         #Log
-        cpu_loss = tr_loss.cpu().data.numpy() /5
-        log.logEpoch( epoch, cpu_loss, 0, tr_root_loss.cpu().data.numpy(), tr_soil_loss.cpu().data.numpy() )
+        cpu_loss = tr_loss /5
+        log.logEpoch( epoch, cpu_loss, 0, tr_root_loss, tr_soil_loss )
         del tr_loss
         del tr_root_loss
         del tr_soil_loss

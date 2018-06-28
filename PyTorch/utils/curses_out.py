@@ -43,7 +43,7 @@ class Display:
         self.st_pt = timeit.default_timer()
         self.cur_epoch = epoch
         self.num_runs = num_runs
-        self.runs_cpl = 1
+        self.num_cpl = 1
         self.clrLine( 6, 0 )
         self.screen.addstr( 6, 0, "Epoch: ", curses.A_BOLD | curses.color_pair(2) )
         self.screen.addstr( 6, 7, str(epoch) + " of "+ str(max_epochs) )
@@ -51,8 +51,9 @@ class Display:
         self.screen.refresh()
     
     def addBatches( self, bt_nbr, of_slices, noise_lvl ):
-        self.bt_str_pt = timeit.default_timer()
-        self.screen.addstr( 7, 0, "Batch: " +self.num_cpl+ "/" +str(self.num_runs) + " Noise LvL: " +str(noise_lvl) )
+        self.bt_l_it = self.offset
+        self.bt_st_pt = timeit.default_timer()
+        self.screen.addstr( 7, 0, "Batch: " +str( self.num_cpl ) +"/" +str(self.num_runs) + " Noise LvL: " +str(noise_lvl) )
         for it in range( bt_nbr ):
             self.clrLine( self.bt_l_it, 0 )
             self.screen.addstr( self.bt_l_it, 0, "Scan " +str( it ) +":" )
@@ -69,13 +70,13 @@ class Display:
         self.screen.addstr( batch_nbr +self.offset, 10, str( slc ) +"/" +str( of_slices ), curses.color_pair(clr) )
         self.screen.refresh()
 
-    def endBatch( self ):
+    def endBatch( self, train_loss ):
         self.bt_ed_pt = timeit.default_timer()
         self.time = self.bt_ed_pt -self.bt_st_pt
-        self.screen.addstr( self.bt_l_it +2, 0, str( self.time ))
+        self.clrLine( self.bt_l_it +1, 0 )
+        self.screen.addstr( self.bt_l_it +1, 0, "Batch Loss: " +str(train_loss) +" Run time: " +str( self.time ) )
         self.num_cpl += 1
         #self.screen.addstr( 7, 0, "Batch: " +self.num_cpl+ "/" +str(self.num_runs) )
-        self.bt_l_it = self.offset
         self.screen.refresh()
 
     def endEpoch( self, train_loss ):
@@ -83,9 +84,9 @@ class Display:
         self.time = self.ed_pt -self.st_pt
         self.avg_time += self.time
         self.clrBlock( (self.bt_l_it +1, self.bt_l_it +2), 0 )
-        self.screen.addstr( self.bt_l_it +1, 0, "Train Loss: " )
-        self.screen.addstr( self.bt_l_it +1, 12, str( train_loss ), curses.color_pair(1) | curses.A_BOLD )
-        self.screen.addstr( self.bt_l_it +2, 0, str( self.time ) +" average: " +str( self.avg_time /self.cur_epoch ) )
+        self.screen.addstr( self.bt_l_it +2, 0, "Train Loss: " )
+        self.screen.addstr( self.bt_l_it +2, 12, str( train_loss ), curses.color_pair(1) | curses.A_BOLD )
+        self.screen.addstr( self.bt_l_it +3, 0, str( self.time ) +" average: " +str( self.avg_time /self.cur_epoch ) )
         self.bt_l_it = self.offset
         self.screen.refresh()
 
