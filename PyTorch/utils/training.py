@@ -16,16 +16,21 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4, num_slices=[1,1,1] ):
     batch.requires_grad=False
     out_list = []
     for it in range( bt_size ):
-        #input_data = batch[:,it,:,:,:].unsqueeze(1)
-        split_list, _ = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups ) 
-        out_cpu_list = []
-        for input_data in split_list:
-        #print(it)
-            output = net( input_data, True )
-            out_cpu_list.append( output.cpu() )
-        del split_list
-        out_list.append( sd.reassemble( out_cpu_list, num_slices ) )
+        input_data = batch[:,it,:,:,:].unsqueeze(1)
+        #split_list, tch_list = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups ) 
+        #del tch_list
+        #out_cpu_list = []
+        #for input_data in split_list:
+        #print( "COMPUTING" )
+        output = net( batch[:,it,:,:,:].unsqueeze(1), True )
+        out_list.append( output.cpu().data.numpy() )
+        #print( "DELETING" )
         del output
+        #out_cpu_list.append( output.cpu() )
+        #del output
+        #del input_data
+        #del split_list
+        #out_list.append( sd.reassemble( out_cpu_list, num_slices ) )
     return out_list
 
 
@@ -45,7 +50,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
             
             bt_per_it = 1
             for bt_it in range( bt_per_it ):
-                noise_list = [x for x in range(1)]
+                noise_list = [x for x in range(5)]
                 shuffle( noise_list )
                 for noise_it in noise_list:
                 #Load Data
@@ -90,7 +95,7 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                     display.endBatch( bt_loss )
                     del batch
                     del teacher
-                    torch.cuda.empty_cache()
+                    #torch.cuda.empty_cache()
 
                 opt.step()
                 opt.zero_grad()
@@ -109,10 +114,10 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
         del tr_loss
         del tr_root_loss
         del tr_soil_loss
-        if( epoch %1 == 0):
+        if( epoch %5 == 0):
             weights = net.getWeights()
             torch.cuda.empty_cache()
-            output = feedForward( net, loader, 0 )
+            output = feedForward( net, loader, 0, num_slices=num_slices )
             log.logWeights( weights )
             teacher = loader.getTeacherNp( 0, 4, net.ups, loader.offset )
             f1_r = np.array([0.0,0.0,0.0])
@@ -122,5 +127,5 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                 f1_s += evle( output[it][0,0,:,:,:], teacher[0,it,:,:,:], True )
             log.logF1Root( epoch, f1_r /4 )
             log.logF1Soil( epoch, f1_s /4 )
-            if( epoch %1 == 0 ): 
+            if( epoch %20 == 0 ): 
                 log.logMilestone( epoch, weights, output, cpu_loss, f1_r, f1_s )

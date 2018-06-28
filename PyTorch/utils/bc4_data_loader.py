@@ -105,7 +105,7 @@ class BatchLoader:
             
         return torch_batch, torch_teacher        
         
-    def getDefaultBatch( self, bt_nbr, bt_size ):
+    def getDefaultBatch( self, bt_nbr, bt_size, cuda=True ):
         r_fac_rnd = np.array( [0,1,2,3] )
         rot_rnd = np.array( [0,1,0,2] )
         x_flip_rnd = np.array( [0,0,0,1] )
@@ -144,7 +144,7 @@ class BatchLoader:
             teacher[0,it,:,:,:] = teacher_list[it][self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
         torch_batch = Variable( torch.Tensor(batch) )
         torch_teacher = Variable( torch.Tensor(teacher ) )
-        if self.is_cuda is not None:
+        if self.is_cuda is not None and cuda:
             torch_batch = torch_batch.cuda(self.is_cuda)
             torch_teacher = torch_teacher.cuda(self.is_cuda)
             

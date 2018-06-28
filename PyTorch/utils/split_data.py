@@ -14,6 +14,8 @@ def reassemble( split_list, num_splits ):
     list_it = 0
     x_split = num_splits[2] *num_splits[1]
     y_split = num_splits[2]
+    for elem in split_list:
+        print( "ELEM: " +str(elem.size()) )
     for dim0 in range( num_splits[0] ):
         elem = split_list[list_it]
         size[2] += elem.size()[2]
@@ -64,7 +66,7 @@ def splitInputAndTeacher( tensor, teacher, num_splits, ups=False ):
     teacher_its.append( getSplitIts( teacher, 2, num_splits[2], ups ) )
     teacher_splits = splitArray( teacher, teacher_its )
     tensor_splits = splitArray( tensor, teacher_its, offset, div )
-    return ( tensor_splits, teacher_splits )
+    return tensor_splits, teacher_splits
 
 
 def splitArray( tensor, num_splits, offset = 0, div = 1 ):
