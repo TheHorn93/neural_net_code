@@ -22,7 +22,7 @@ class Network( nn.Module ):
         def forward( self, inp, res_list ):
             output = inp
             for idx, ops in enumerate( self.children() ):
-                output = ops( output, self.res_dict )
+                output = ops( output )
             return output
             
         def getParams( self ):
@@ -193,8 +193,8 @@ class Network( nn.Module ):
             output = funcs.sigmoid( output )
         return output
 
-net = Network( ["5 3 relu False".split(),"5 3 relu True".split(),"1 sigmoid_out False".split(), "3 1 relu True".split()] , '')
+#net = Network( ["5 3 relu False".split(),"5 3 relu True".split(),"1 sigmoid_out False".split(), "3 1 relu True".split()] , '')
 #net.cuda()
 #inp = torch.autograd.Variable( torch.ones( (1,1,200,200,200) ) ).cuda()
-print( net.children )
+#print( net.children )
 #print( net.teacher_offset )
