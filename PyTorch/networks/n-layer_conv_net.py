@@ -5,6 +5,8 @@ Created on Fry May 25 06:41:21 2018
 @author: JHorn
 """
 
+#TODO allow for input padding on demand! Networks should be evaluated on same size output.
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as funcs
@@ -18,11 +20,9 @@ class Network( nn.Module ):
             super( Network.ConvLayerBase, self ).__init__()
             
         def forward( self, inp, res_list ):
-            if self.apply_bt_norm:
-                inp = self.bt_norm( inp )
-            output = self.conv( inp )
-            if self.activation is not None:
-                output = self.activation( output )
+            output = inp
+            for idx, ops in enumerate( self.children() ):
+                output = ops( output, self.res_dict )
             return output
             
         def getParams( self ):
@@ -49,9 +49,12 @@ class Network( nn.Module ):
             super( Network.ConvLayer, self ).__init__()
             self.apply_bt_norm = bt_norm
             if bt_norm:
-                self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
-            self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], kernel_size=( kernel_size, kernel_size, kernel_size ) )
-            self.activation = activation
+            #    self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
+                self.add_module( "bt_norm", nn.BatchNorm3d( num_kernels[0]) )
+            #self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], kernel_size=( kernel_size, kernel_size, kernel_size ) )
+            self.add_module( "conv", nn.Conv3d( num_kernels[0], num_kernels[1], kernel_size=( kernel_size, kernel_size, kernel_size ) ) )
+            if activation is not None:
+                self.add_module( "act", activation )
             
         def forward( self, inp, res_list=0 ):
             output = inp
@@ -61,12 +64,15 @@ class Network( nn.Module ):
     class ResConvLayer( ConvLayerBase ):
         def __init__( self, kernel_size, num_kernels, res_layer, res_offset, activation, bt_norm=False ):
             super( Network.ResConvLayer, self ).__init__()
-            self.ops = nn.ModuleList()
+            #self.ops = nn.ModuleList()
             self.apply_bt_norm = bt_norm
             if bt_norm:
-                self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
-            self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) )
-            self.activation = activation
+            #    self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
+                self.add_module( "bt_norm", nn.BatchNorm3d( num_kernels[0]) )
+            #self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], ( kernel_size, kernel_size, kernel_size ) )
+            self.add_module( "conv", nn.Conv3d( num_kernels[0], num_kernels[1], kernel_size=( kernel_size, kernel_size, kernel_size ) ) )
+            if activation is not None:
+                self.add_module( "act", activation )
             self.res_layer = res_layer
             self.offset = res_offset
             
@@ -149,11 +155,11 @@ class Network( nn.Module ):
 
     def parseAct( self,  act_string ):
         if act_string == "relu":
-            return funcs.relu
+            return nn.ReLU()
         elif act_string == "sigmoid":
-            return funcs.sigmoid
+            return nn.Sigmoid()
         elif act_string == "tanh":
-            return funcs.tanh
+            return nn.Tanh()
         elif act_string == "sigmoid_out":
             return None
     
@@ -187,8 +193,8 @@ class Network( nn.Module ):
             output = funcs.sigmoid( output )
         return output
 
-#net = Network( ["5 3 relu False".split(),"5 3 relu True".split(),"1 sigmoid_out False".split(), "3 1 relu True".split()] , '')
+net = Network( ["5 3 relu False".split(),"5 3 relu True".split(),"1 sigmoid_out False".split(), "3 1 relu True".split()] , '')
 #net.cuda()
 #inp = torch.autograd.Variable( torch.ones( (1,1,200,200,200) ) ).cuda()
-#print( net( inp ) )
+print( net.children )
 #print( net.teacher_offset )

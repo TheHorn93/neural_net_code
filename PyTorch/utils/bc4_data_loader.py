@@ -5,6 +5,8 @@ Created on Mon May 14 13:33:53 2018
 @author: JHorn
 """
 
+#TODO allow for zero-padding on demand
+
 import torch
 from torch.autograd import Variable
 import numpy as np
