@@ -90,15 +90,15 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                         del tch
                         del root_loss
                         del soil_loss
-                        del loss
                         
+                    opt.step()
+                    opt.zero_grad()
+                    del loss
+
                     display.endBatch( bt_loss )
                     del batch
                     del teacher
                     #torch.cuda.empty_cache()
-
-                opt.step()
-                opt.zero_grad()
         #Eval
         #output = net( batch[:,bt_size -1,:,:,:].unsqueeze(1) )
         #loss, _, _ = loss_func( output, teacher[:,bt_size -1,:,:,:].unsqueeze(1), epoch )
@@ -127,5 +127,5 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
                 f1_s += evle( output[it][0,0,:,:,:], teacher[0,it,:,:,:], True )
             log.logF1Root( epoch, f1_r /4 )
             log.logF1Soil( epoch, f1_s /4 )
-            if( epoch %20 == 0 ): 
+            if( epoch %25 == 0 ): 
                 log.logMilestone( epoch, weights, output, cpu_loss, f1_r, f1_s )

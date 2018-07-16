@@ -53,6 +53,7 @@ class Display:
     def addBatches( self, bt_nbr, of_slices, noise_lvl ):
         self.bt_l_it = self.offset
         self.bt_st_pt = timeit.default_timer()
+        self.clrLine( 7 )
         self.screen.addstr( 7, 0, "Batch: " +str( self.num_cpl ) +"/" +str(self.num_runs) + " Noise LvL: " +str(noise_lvl) )
         for it in range( bt_nbr ):
             self.clrLine( self.bt_l_it, 0 )

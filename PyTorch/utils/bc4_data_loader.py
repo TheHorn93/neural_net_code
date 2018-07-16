@@ -44,6 +44,7 @@ class BatchLoader:
             self.up_key = "366x366x1226"
             self.data_size=[138,138,613]
             self.data_size_ups=[366,366,1226]
+        self.threshold = 63
             
         
     def getBatchAndUpsampledGT( self, bt_size, snr=-1 ):
@@ -82,7 +83,7 @@ class BatchLoader:
             teacher = np.load( folder_str + self.up_key +"_occupancy.npz" )["arr_0"]
             teacher = np.moveaxis( teacher, 2, 0 )
             data_list.append( data.astype(np.float32) /255 )
-            teacher = np.where( teacher > 127, 1, 0 )
+            teacher = np.where( teacher > self.threshold, 1, 0 )
             teacher_list.append( teacher.astype(np.float32))
             
         shape = data_list[0].shape
@@ -129,7 +130,7 @@ class BatchLoader:
             teacher = np.load( file_str + self.key+"_occupancy.npz" )["arr_0"][:,:,:]
             teacher = np.moveaxis( teacher, 2, 0 )
             data_list.append( data.astype(np.float32) /255 )
-            teacher = np.where( teacher > 127, 1, 0 )
+            teacher = np.where( teacher > self.threshold, 1, 0 )
             teacher_list.append( teacher.astype(np.float32) )
             
         shape = data_list[0].shape
@@ -186,7 +187,7 @@ class BatchLoader:
             teacher = np.load( file_str +self.key +"_occupancy.npz" )["arr_0"][:,:,:]
             teacher = np.moveaxis( teacher, 2, 0 )
             data_list.append( data.astype(np.float32) /255 )
-            teacher = np.where( teacher > 127, 1, 0 )
+            teacher = np.where( teacher > self.threshold, 1, 0 )
             teacher_list.append( teacher.astype(np.float32) )
             
         shape = data_list[0].shape
@@ -408,7 +409,11 @@ class ValidationLoader:
         
         shape = data.shape
         bt_data_size = ( 1, 1, shape[0], shape[1], shape[2] )
-        teacher_data_size = ( 1, 1, shape[0] -int(self.offset*2), shape[1] -int(self.offset*2), shape[2] -int(self.offset*2) )
+        if self.ups:
+            teacher_data_size = (1,1, shape[0]*2 -int(self.offset*2), shape[1]*2 -int(self.offset*2), shape[2]*2 -int(self.offset*2))
+        else:
+            teacher_data_size = ( 1, 1, shape[0] -int(self.offset*2), shape[1] -int(self.offset*2), shape[2] -int(self.offset*2) )
+        #print(teacher_data_size)
         batch = np.empty( bt_data_size )
         teacher_out = np.empty( teacher_data_size )
         

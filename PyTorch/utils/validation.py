@@ -20,7 +20,7 @@ class ValidationResult:
         num_elems = 3*4*3*2*2*2*3*5
         self.results = [ np.zeros( res_shape ), np.zeros( res_shape ), np.zeros( res_shape ) ]
         loss_func = losses.CrossEntropy( 0 )
-        roots = ["lupine_small", "lupine_22", "gtk"]
+        roots = ["gtk","lupine_small", "lupine_22", "gtk"]
         it = 0
         for root in range( res_shape[0] ):
             for rad in range( res_shape[1] ):
@@ -34,10 +34,14 @@ class ValidationResult:
                                         output = net( batch, loss_func.apply_sigmoid  )
                                         loss, loss_rt, loss_sl = loss_func( output, teacher, 1 ) 
                                         loss, loss_rt, loss_sl = loss.cpu().data.numpy(), loss_rt.cpu().data.numpy(), loss_sl.cpu().data.numpy()
+                                        del output
                                         self.results[0][ root, rad, rot, x_flip, y_flip, swap, noise, nbr ] = loss
                                         self.results[1][ root, rad, rot, x_flip, y_flip, swap, noise, nbr ] = loss_rt
                                         self.results[2][ root, rad, rot, x_flip, y_flip, swap, noise, nbr ] = loss_sl
                                         it += 1
+                                        del loss
+                                        del loss_rt 
+                                        del loss_sl
                                         print( str(it) +'/' +str(num_elems), end='\r' )
     
     def getMean( self, t_it, dim=-1 ):
