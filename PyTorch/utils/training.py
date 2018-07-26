@@ -106,10 +106,10 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
         tr_root_loss /= bt_size *bt_per_it *num_sl *5
         tr_soil_loss /= bt_size *bt_per_it *num_sl *5
 
-        display.endEpoch( tr_loss /5 )
+        display.endEpoch( tr_loss /( 5 *len(loader_list)) )
         
         #Log
-        cpu_loss = tr_loss /5
+        cpu_loss = tr_loss /( 5 *len(loader_list) ) 
         log.logEpoch( epoch, cpu_loss, 0, tr_root_loss, tr_soil_loss )
         del tr_loss
         del tr_root_loss

@@ -14,6 +14,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import plotly
 import plotly.graph_objs as go
 import cv2
+import warnings
 
 def flattenWeights( weights ):
     flt_weights = np.zeros( [(weights.shape[1] +1) *weights.shape[0]-1, weights.shape[2]*(weights.shape[3]+1)-1] )
@@ -172,6 +173,8 @@ def scatterRoot( stack, path ):
     fig = go.Figure(data=[go.Scatter3d(x=c[0],y=c[1],z=c[2], mode='markers', marker=dict(symbol='circle-dot', size=1))],
                     layout=go.Layout(scene=dict(aspectmode='data')))
     plotly.offline.plot(fig, filename=path)
+
+warnings.filterwarnings("ignore")
 #a = np.random.rand( 1,8,1,1,1,1)
 #print(a)
 #b = flattenWeights(a)
