@@ -25,7 +25,40 @@ class LossBase:
             weights = torch.add( weight_n, teacher )
             loss_out = torch.mul( loss_out, weights )
         return loss_out
+
+    def setWeighting( self, loss_out, teacher, soil, weight ):
+        weight_p = torch.mul( teacher, weight )
+        weights = torch.add( weight_p, soil )
+        loss_out = torch.mul( loss_out, weights )
+        return loss_out
         
+
+class CrossEntropyWeighted( LossBase ):
+    
+    def __init__( self, weight = 1 ):
+        super().__init__( 0, False )
+        self.weight = weight
+        
+    def __str__( self ):
+        return "CrossEntropy weighted with " +str( self.weight )
+    
+    def __call__( self, inp, teacher, epoch ):
+        #Cross Entropy with logits
+        loss_out = torch.max( inp, torch.zeros_like( inp ) )
+        loss_out = loss_out - torch.mul( inp, teacher )
+        loss_out = loss_out + torch.log1p( torch.exp( -torch.abs( inp ) ) )
+        
+        soil = torch.add( torch.ones_like(teacher), -teacher )
+        soil_loss = torch.div( torch.mul( soil, loss_out ), soil.sum() ).sum()
+        root_loss = torch.div( torch.mul( teacher, loss_out ), teacher.sum() ).sum()
+        
+        #Weighting
+        loss_out = self.setWeight( loss_out, teacher, soil, self.weight )
+    
+        loss_out = torch.mean( loss_out )
+        
+        return ( loss_out, root_loss, soil_loss )
+
 
 class CrossEntropy( LossBase ):
     
