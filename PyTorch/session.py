@@ -41,7 +41,7 @@ class Instance:
         
         def __init__( self, network_set, loss, opt, lr, epochs, data, batch_size, slices, epoch_gates ):
             self.network_set = network_set
-            self.loss = loss[0]
+            self.loss = loss
             self.opt = opt[0]
             self.lr = lr[0]
             self.epochs = epochs[0]
@@ -78,13 +78,17 @@ class Instance:
         training.training( curses_out.Display( stdscr, self.net.getStructure(), instance_string ), self.log, self.net, self.loaders, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
                      
     def parseArgs( self, loss, opt, epochs, data, epoch_gates=(None,None) ):
-        if loss == "cross_entropy":
-            if epoch_gates == None:
-                self.loss = losses.CrossEntropy( epochs )
-            elif epoch_gates[1] == None:
-                self.loss = losses.CrossEntropy( epoch_gates[0] )
+        if loss[0] == "cross_entropy":
+            if len( loss ) == 1:
+                if epoch_gates == None:
+                    self.loss = losses.CrossEntropy( epochs )
+                elif epoch_gates[1] == None:
+                    self.loss = losses.CrossEntropy( epoch_gates[0] )
+                else:
+                    self.loss = losses.CrossEntropyDynamic( epoch_gates[0], epoch_gates[1] )
             else:
-                self.loss = losses.CrossEntropyDynamic( epoch_gates[0], epoch_gates[1] )
+                self.loss = losses.CrossEntropyWeighted( loss[1] )
+                
         if opt == "adam":
             self.opt = optimizer.AdamOptimizer()
         self.data = data

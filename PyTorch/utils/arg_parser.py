@@ -65,7 +65,7 @@ class TrainParser():
         self.add.add_argument( "-d", "--data", help="Root type used for training", nargs='+', required=True )
         self.add.add_argument( "-lr", "--learning_rate", help="Network learning rate", nargs=1, type=float, required=True )
         self.add.add_argument( "-e", "--epochs", help="Epochs to train", nargs=1, type=int, required=True )
-        self.add.add_argument( "-ls", "--loss", help="Loss function to use and parameters", nargs=1, default=["cross_entropy"] )
+        self.add.add_argument( "-ls", "--loss", help="Loss function to use and parameters", nargs='+', default=["cross_entropy"] )
         self.add.add_argument( "-eg", "--epoch_gates", help="Epoch gates for loss method", nargs='+', type=int )
         self.add.add_argument( "-op", "--optimizer", help="Optimizer to use", nargs=1, default=["adam"] )
         self.add.add_argument( "-sl", "--slices", help="Numbers of slices per run", nargs=3, type=int, default=[1,1,1] )

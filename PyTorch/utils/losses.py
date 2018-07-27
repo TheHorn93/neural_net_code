@@ -53,7 +53,7 @@ class CrossEntropyWeighted( LossBase ):
         root_loss = torch.div( torch.mul( teacher, loss_out ), teacher.sum() ).sum()
         
         #Weighting
-        loss_out = self.setWeight( loss_out, teacher, soil, self.weight )
+        loss_out = self.setWeighting( loss_out, teacher, soil, self.weight )
     
         loss_out = torch.mean( loss_out )
         
