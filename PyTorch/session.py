@@ -87,7 +87,7 @@ class Instance:
                 else:
                     self.loss = losses.CrossEntropyDynamic( epoch_gates[0], epoch_gates[1] )
             else:
-                self.loss = losses.CrossEntropyWeighted( loss[1] )
+                self.loss = losses.CrossEntropyWeighted( float( loss[1] ) )
                 
         if opt == "adam":
             self.opt = optimizer.AdamOptimizer()
