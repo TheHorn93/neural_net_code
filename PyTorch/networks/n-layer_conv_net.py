@@ -45,13 +45,13 @@ class Network( nn.Module ):
                 
     
     class ConvLayer( ConvLayerBase ):
-        def __init__( self, kernel_size, num_kernels, activation, bt_norm=False ):
+        def __init__( self, kernel_size, num_kernels, activation, bt_norm=False, drop_out=0.0 ):
             super( Network.ConvLayer, self ).__init__()
             self.apply_bt_norm = bt_norm
+            if drop_out > 0.0:
+                self.add_module( "drop_out", nn.Dropout3d( drop_out ) )
             if bt_norm:
-            #    self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
                 self.add_module( "bt_norm", nn.BatchNorm3d( num_kernels[0]) )
-            #self.conv = nn.Conv3d( num_kernels[0], num_kernels[1], kernel_size=( kernel_size, kernel_size, kernel_size ) )
             self.add_module( "conv", nn.Conv3d( num_kernels[0], num_kernels[1], kernel_size=( kernel_size, kernel_size, kernel_size ) ) )
             if activation is not None:
                 self.add_module( "act", activation )
@@ -62,10 +62,12 @@ class Network( nn.Module ):
         
     
     class ResConvLayer( ConvLayerBase ):
-        def __init__( self, kernel_size, num_kernels, res_layer, res_offset, activation, bt_norm=False ):
+        def __init__( self, kernel_size, num_kernels, res_layer, res_offset, activation, bt_norm=False, drop_out=0.0 ):
             super( Network.ResConvLayer, self ).__init__()
             #self.ops = nn.ModuleList()
             self.apply_bt_norm = bt_norm
+            if drop_out > 0.0:
+                self.add_module( "drop_out", nn.Dropout3d( drop_out ) )
             if bt_norm:
             #    self.bt_norm = nn.BatchNorm3d( num_kernels[0] )
                 self.add_module( "bt_norm", nn.BatchNorm3d( num_kernels[0]) )
@@ -142,6 +144,20 @@ class Network( nn.Module ):
                 for off_it in range( res_layer, l_it ):
                     res_offset += self.offset_list[off_it]
                 self.add_module( "conv_" +str(l_it), self.ResConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), res_layer, res_offset, self.parseAct(args[3]), bt_norm ) )
+            elif len( args ) == 6:
+                if args[4] == 'True':
+                    bt_norm = True
+                else:
+                    bt_norm = False
+                res_layer = int( args[3] )
+                res_offset = 0
+                self.res_dict[res_layer] = None
+                for off_it in range( res_layer, l_it ):
+                    res_offset += self.offset_list[off_it]
+                if res_layer > -1:
+                    self.add_module( "conv_" +str(l_it), self.ResConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), res_layer, res_offset, self.parseAct(args[3]), bt_norm, float( args[5] ) ) )
+                else:
+                    self.add_module( "conv_" +str(l_it), self.ConvLayer( int( args[0] ), ( num_kernels[l_it], num_kernels[l_it +1] ), self.parseAct(args[2]), bt_norm, float( args[5] ) ) )
             elif len( args ) == 3:
                 if args[2] == 'True':
                     bt_norm = True
@@ -149,7 +165,7 @@ class Network( nn.Module ):
                     bt_norm = False
                 if not self.ups:
                     self.teacher_offset *= 2
-                    self.add_module( "transp_conv" +str(l_it), self.Upsample( ( num_kernels[l_it], num_kernels[l_it +1] ), self.parseAct(args[2]), bt_norm ) )
+                    self.add_module( "upsample_" +str(l_it), self.Upsample( ( num_kernels[l_it], num_kernels[l_it +1] ), self.parseAct(args[2]), bt_norm ) )
                     self.ups = True
             self.teacher_offset += self.offset_list[l_it]
 
@@ -193,7 +209,7 @@ class Network( nn.Module ):
             output = funcs.sigmoid( output )
         return output
 
-#net = Network( ["5 3 relu False".split(),"5 3 relu True".split(),"1 sigmoid_out False".split(), "3 1 relu True".split()] , '')
+#net = Network( ["5 3 relu False".split(),"5 3 relu -1 True 0.2".split(),"1 sigmoid_out False".split(), "3 1 relu True".split()] , '')
 #net.cuda()
 #inp = torch.autograd.Variable( torch.ones( (1,1,200,200,200) ) ).cuda()
 #print( net.children )
