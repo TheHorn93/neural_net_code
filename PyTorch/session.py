@@ -71,11 +71,17 @@ class Instance:
         instance_string = "Training: loss="+ str( self.loss ) +", lr=" +str( self.lr ) + ", opt="+ str( self.opt ) +"\n" +"Data: data="+ str( self.data ) +", batch_size=" +str( self.batch_size ) +", slices=" +str( self.slices ) 
         self.log.masterLog( self.net.getStructure(), instance_string )
         self.loaders = []
-        for data in self.data:
-            self.loaders.append( data_loader.BatchLoader( input_path, data, self.net.teacher_offset, device ) )
         if device is not None:
             self.net.cuda( device )
-        training.training( curses_out.Display( stdscr, self.net.getStructure(), instance_string ), self.log, self.net, self.loaders, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
+        if data[0] = "Full":
+            display = curses_out.FullSetDisplay( stdscr, self.net.getStructure(), instance_string )
+            self.loader = data_loader.FullSetLoader( input_path, self.net.teacher_offset, self.net.ups, device )
+            training.trainOnFullSet( display, self.log, self.net, self.loader, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
+        else:
+            display = curses_out.Display( stdscr, self.net.getStructure(), instance_string )
+            for data in self.data:
+                self.loaders.append( data_loader.BatchLoader( input_path, data, self.net.teacher_offset, device ) )
+            training.training( display, self.log, self.net, self.loaders, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
                      
     def parseArgs( self, loss, opt, epochs, data, epoch_gates=(None,None) ):
         if loss[0] == "cross_entropy":

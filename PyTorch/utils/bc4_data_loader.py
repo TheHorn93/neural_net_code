@@ -14,6 +14,200 @@ import numpy as np
 def getFilename( n, c ):
     return "noisy_" +str(n) +"_" +str(c) +"_new_.npy"
 
+class FullSetLoader:
+    
+    def __init__( self, input_path, offset, ups, is_cuda=-1 ):
+        self.input_path = input_path
+        self.dataset_path = input_path +"/dataset/"
+        self.init = False
+        self.offset = int(offset)
+        self.ups = ups
+        self.is_cuda = is_cuda
+        self.r_fac_dic = ["r_factor_0.34/","r_factor_0.71/","r_factor_1.00/","r_factor_1.41/"]
+        self.rot_dic = ["rot_0/","rot_60/","rot_120/"]
+        self.x_flip_dic = ["x_flip_0/","x_flip_1/"]
+        self.y_flip_dic = ["y_flip_0/","y_flip_1/"]
+        self.swap_dic = ["x_y_swap_0/","x_y_swap_1/"]
+        self.c_dic = ["g","h","l"]
+        self.key = "256x256x120"
+        self.up_key = "512x512x240"
+        self.data_size=[120,256,256]
+        self.data_size_ups=[240,512,512]
+        self.key = "256x256x128"
+        self.up_key = "512x512x256"
+        self.data_size=[128,256,256]
+        self.data_size_ups=[256,512,512]
+        self.key = "183x183x613"
+        self.up_key = "366x366x1226"
+        self.data_size=[138,138,613]
+        self.data_size_ups=[366,366,1226]
+        self.threshold = 63
+        
+    
+    def keyToPath( self, key ):
+        path =self.input_path +"/"
+        path += key[0] +"/"
+        path += "r_factor_" +key[6] +"/"
+        path += "rot_" +key[2] +"/"
+        path += "x_flip_" +key[3] +"/"
+        path += "y_flip_" +key[4] +"/"
+        path += "x_y_swap_" +key[5] +"/"
+        if key[0] == "lupine_small_xml":
+            scan_key = "256x256x128"
+            if self.ups:
+                teacher_path = path +"512x512x256_occupancy.npz"
+            else:
+                teacher_path = path +"256x256x128_occupancy.npz"
+        elif key[0] == "gtk":
+            scan_key = "183x183x613"
+            if self.ups:
+                teacher_path = path +"366x366x1226_occupancy.npz"
+            else:
+                teacher_path = path +"183x183x613_occupancy.npz"
+        elif key[0] = "Lupine_22august"
+            scan_key = "256x256x120"
+            if self.ups:
+                teacher_path = path +"512x512x240_occupancy.npz"
+            else:
+                teacher_path = path +"256x256x120_occupancy.npz"
+        file_path = path+ scan_key +"/" +getFilename( key[7], key[1] )
+        return file_path, teacher_path
+        
+    
+    def createPool( self, ratio=0.5 ):
+        training_set_key = np.loadtxt( self.dataset_path +"training_set.txt", dtype=str )
+        np.random.shuffle( training_set_key )
+        self.set_size = int( round( training_set_key.shape[0] *ratio ) )
+        self.pool = training_set_key[:self.set_size,:]
+            
+                
+    def newEpoch( self ):
+        np.random.shuffle( self.pool )
+        
+        
+    def getNextInput( self, it, batch_size=10 ):
+        key = self.pool[it,:]
+        inp_path, teacher_path = self.keyToPath( key )
+        inp_list = []
+        gt_list = []
+        for it in bt_size:
+            inp, gt = self.loadInput( inp_path, teacher_path )
+            inp_list.append( inp )
+            gt_list.append( gt )
+        if self.is_cuda is not none:
+            for inp in inp_list:
+                inp.cuda()
+            for gt in gt_list:
+                gt.cuda()
+        return inp_list, gt_list
+        
+        
+    def loadInput( self, inp_path, teacher_path ):
+        inp = np.load( inp_path )[:,0,:,:]
+        gt = np.load( teacher_path )["arr_0"]
+        gt = np.moveaxis( gt, 2, 0 )
+        inp = inp.astype( np.float32 ) /255
+        gt = np.where( gt > self.threshold, 1, 0 )
+        
+        inp_resized = np.empty( (1,1,inp.shape[0], inp.shape[1], inp.shape[2]) )
+        gt_resized = np.empty( (1, 1 ,inp.shape[0] -int(self.offset*2), inp.shape[1] -int(self.offset*2), inp.shape[2] -int(self.offset*2) )
+        inp_resized[0,0,:,:,:] = inp
+        gt_resized[0,0,:,:,:] = gt[self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
+        
+        inp_resized = torch.Tensor( inp_resized )
+        gt_resized = torch.Tensor( gt_resized )
+        
+        return inp_resized, gt_resized
+    
+    
+    def getTeacherNp( self, bt_nbr, bt_size, ups, offset = 0 ):
+        #print( "Loading teacher " +str(bt_nbr) )
+        
+        r_fac_rnd = np.array( [0,1,2,3] )
+        rot_rnd = np.array( [0,1,0,2] )
+        x_flip_rnd = np.array( [0,0,0,1] )
+        y_flip_rnd = np.array( [0,1,0,0] )
+        swap_rnd = np.array( [1,1,0,0] )
+        sc_id = np.array( [0,0,0,0] )
+        c_id = np.array( [0,1,0,2] )
+        
+        teacher_list = []
+        for it in range( bt_size ):
+            folder_str = ( self.input_path +"Lupine_22august/" +self.r_fac_dic[r_fac_rnd[it]]
+                         +self.rot_dic[rot_rnd[it]]
+                         +self.x_flip_dic[x_flip_rnd[it]]
+                         +self.y_flip_dic[y_flip_rnd[it]]
+                         +self.swap_dic[swap_rnd[it]]
+                         )
+            
+            if ups:
+                tch_str = folder_str + "512x512x240_occupancy.npz"
+            else:
+                tch_str = folder_str + "256x256x120_occupancy.npz"
+            teacher = np.load( tch_str )["arr_0"]
+            teacher = np.moveaxis( teacher, 2, 0 )
+            teacher = np.where( teacher > 127, 1, 0 )
+            teacher_list.append( teacher.astype(np.float32) )
+            
+        shape = teacher_list[0].shape
+        teacher_data_size = ( 1, bt_size, shape[0]-offset*2, shape[1]-offset*2, shape[2]-offset*2 )
+        teacher = np.zeros( teacher_data_size )
+
+        for it in range( bt_size ):
+            if offset > 0:
+                teacher[0,it,:,:,:] = teacher_list[it][offset:-offset,offset:-offset,offset:-offset]
+            else:
+                teacher[0,it,:,:,:] = teacher_list[it]
+           
+        return teacher
+
+
+    def getDefaultBatch( self, bt_nbr, bt_size, cuda=True ):
+        r_fac_rnd = np.array( [0,1,2,3] )
+        rot_rnd = np.array( [0,1,0,2] )
+        x_flip_rnd = np.array( [0,0,0,1] )
+        y_flip_rnd = np.array( [0,1,0,0] )
+        swap_rnd = np.array( [1,1,0,0] )
+        sc_id = np.array( [4,4,4,4] )
+        c_id = np.array( [0,1,0,2] )
+        #print( "Loading from batches: " )
+        
+        data_list = []
+        teacher_list = []
+        for it in range( bt_size ):
+            file_str = ( self.input_path + "Lupine_22august/" +self.r_fac_dic[r_fac_rnd[it]]
+                         +self.rot_dic[rot_rnd[it]]
+                         +self.x_flip_dic[x_flip_rnd[it]]
+                         +self.y_flip_dic[y_flip_rnd[it]]
+                         +self.swap_dic[swap_rnd[it]]
+                         )
+            self.key = "256x256x120"
+            #print( str(it) +": " + file_str )
+            data = np.load( file_str +self.key+"/" +getFilename( sc_id[it], self.c_dic[c_id[it]] ) )[:,0,:,:]
+            teacher = np.load( file_str + self.key+"_occupancy.npz" )["arr_0"][:,:,:]
+            teacher = np.moveaxis( teacher, 2, 0 )
+            data_list.append( data.astype(np.float32) /255 )
+            teacher = np.where( teacher > self.threshold, 1, 0 )
+            teacher_list.append( teacher.astype(np.float32) )
+            
+        shape = data_list[0].shape
+        bt_data_size = ( 1, bt_size, shape[0], shape[1], shape[2] )
+        teacher_data_size = ( 1, bt_size, shape[0] -int(self.offset*2), shape[1] -int(self.offset*2), shape[2] -int(self.offset*2) )
+
+        batch = np.empty( bt_data_size )
+        teacher = np.empty( teacher_data_size )
+        
+        for it in range( bt_size ):
+            batch[0,it,:,:,:] = data_list[it]
+            teacher[0,it,:,:,:] = teacher_list[it][self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
+        torch_batch = Variable( torch.Tensor(batch) )
+        torch_teacher = Variable( torch.Tensor(teacher ) )
+        if self.is_cuda is not None and cuda:
+            torch_batch = torch_batch.cuda(self.is_cuda)
+            torch_teacher = torch_teacher.cuda(self.is_cuda)
+            
+        return torch_batch, torch_teacher
+    
 
 class BatchLoader:
     
@@ -258,7 +452,6 @@ class BatchLoader:
             
         return torch_batch, torch_teacher
             
-    
     
     def getTeacherNp( self, bt_nbr, bt_size, ups, offset = 0 ):
         #print( "Loading teacher " +str(bt_nbr) )
