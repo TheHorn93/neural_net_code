@@ -69,7 +69,10 @@ class Instance:
         else:
             self.log = logger.Logger( logging_path )
         instance_string = "Training: loss="+ str( self.loss ) +", lr=" +str( self.lr ) + ", opt="+ str( self.opt ) +"\n" +"Data: data="+ str( self.data ) +", batch_size=" +str( self.batch_size ) +", slices=" +str( self.slices ) 
-        self.log.masterLog( self.net.getStructure(), instance_string )
+        child_str = ""
+        for _, layer in enumerate( self.net.children() ):
+            child_str += str(layer) +'\n'
+        self.log.masterLog( self.net.getStructure(), instance_string, child_str )
         self.loaders = []
         if device is not None:
             self.net.cuda( device )
@@ -93,7 +96,7 @@ class Instance:
                 else:
                     self.loss = losses.CrossEntropyDynamic( epoch_gates[0], epoch_gates[1] )
             else:
-                self.loss = losses.CrossEntropyWeighted( loss[1] )
+                self.loss = losses.CrossEntropyWeighted( float( loss[1] ) )
                 
         if opt == "adam":
             self.opt = optimizer.AdamOptimizer()

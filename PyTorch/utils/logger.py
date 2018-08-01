@@ -57,7 +57,7 @@ class Logger:
         print( "Visdom instantiated" )
         
     
-    def masterLog( self, structure, instance ):
+    def masterLog( self, structure, instance, pt_str ):
         self.vis.text( structure, win="structure" )
         str_file = open( self.folder_path + "model.txt", "a" )
         str_file.write( structure )
@@ -65,6 +65,9 @@ class Logger:
         ins_file = open( self.folder_path + "instance.txt", "a" )
         ins_file.write( instance )
         ins_file.close()
+        pytorch_file = open( self.folder_path +"pytorch.txt", "a" )
+        pytorch_file.write( pt_str )
+        pytorch_file.close()
         
         
     def logMilestone( self, epoch, weight_list, output, train_err, f1_root, f1_soil ):
