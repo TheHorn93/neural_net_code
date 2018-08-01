@@ -18,7 +18,7 @@ class FullSetLoader:
     
     def __init__( self, input_path, offset, ups, is_cuda=-1 ):
         self.input_path = input_path
-        self.dataset_path = input_path +"/dataset/"
+        self.dataset_path = input_path +"dataset/2018_07_30_16_42_10/"
         self.init = False
         self.offset = int(offset)
         self.ups = ups
@@ -47,6 +47,8 @@ class FullSetLoader:
     def keyToPath( self, key ):
         path =self.input_path +"/"
         path += key[0] +"/"
+        if key[6] == "1.0":
+            key[6] = "1.00"
         path += "r_factor_" +key[6] +"/"
         path += "rot_" +key[2] +"/"
         path += "x_flip_" +key[3] +"/"
@@ -64,13 +66,13 @@ class FullSetLoader:
                 teacher_path = path +"366x366x1226_occupancy.npz"
             else:
                 teacher_path = path +"183x183x613_occupancy.npz"
-        elif key[0] = "Lupine_22august"
+        elif key[0] == "Lupine_22august":
             scan_key = "256x256x120"
             if self.ups:
                 teacher_path = path +"512x512x240_occupancy.npz"
             else:
                 teacher_path = path +"256x256x120_occupancy.npz"
-        file_path = path+ scan_key +"/" +getFilename( key[7], key[1] )
+        file_path = path+ scan_key +"/" +getFilename( int(key[7])-1, key[1] )
         return file_path, teacher_path
         
     
@@ -85,20 +87,18 @@ class FullSetLoader:
         np.random.shuffle( self.pool )
         
         
-    def getNextInput( self, it, batch_size=10 ):
+    def getNextInput( self, it, bt_size=10 ):
         key = self.pool[it,:]
         inp_path, teacher_path = self.keyToPath( key )
         inp_list = []
         gt_list = []
-        for it in bt_size:
+        for it in range( bt_size ):
             inp, gt = self.loadInput( inp_path, teacher_path )
+            if self.is_cuda is not None:
+                inp = inp.cuda()
+                gt = gt.cuda()
             inp_list.append( inp )
             gt_list.append( gt )
-        if self.is_cuda is not none:
-            for inp in inp_list:
-                inp.cuda()
-            for gt in gt_list:
-                gt.cuda()
         return inp_list, gt_list
         
         
@@ -110,7 +110,7 @@ class FullSetLoader:
         gt = np.where( gt > self.threshold, 1, 0 )
         
         inp_resized = np.empty( (1,1,inp.shape[0], inp.shape[1], inp.shape[2]) )
-        gt_resized = np.empty( (1, 1 ,inp.shape[0] -int(self.offset*2), inp.shape[1] -int(self.offset*2), inp.shape[2] -int(self.offset*2) )
+        gt_resized = np.empty( (1, 1 ,inp.shape[0] -int(self.offset*2), inp.shape[1] -int(self.offset*2), inp.shape[2] -int(self.offset*2) ) )
         inp_resized[0,0,:,:,:] = inp
         gt_resized[0,0,:,:,:] = gt[self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
         

@@ -76,8 +76,8 @@ class Instance:
         self.loaders = []
         if device is not None:
             self.net.cuda( device )
-        if data[0] = "Full":
-            display = curses_out.FullSetDisplay( stdscr, self.net.getStructure(), instance_string )
+        if self.data[0] == "Full":
+            display = curses_out.DisplayFullSet( stdscr, self.net.getStructure(), instance_string )
             self.loader = data_loader.FullSetLoader( input_path, self.net.teacher_offset, self.net.ups, device )
             training.trainOnFullSet( display, self.log, self.net, self.loader, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
         else:

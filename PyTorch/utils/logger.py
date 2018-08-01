@@ -15,7 +15,7 @@ class DummyLogger:
     def __init__( self, path ):
         pass
     
-    def masterLog( self, structure, instance ):
+    def masterLog( self, structure, instance, pt_str ):
         pass
     
     def logMilestone( self, epoch, weight_list, output, train_err, f1_root, f1_soil ):

@@ -138,6 +138,7 @@ def trainOnFullSet( display, log, net, loader, loss_func, optimizer, lr, epochs,
     evle = evaluator.F1Score()
     opt = optimizer( net, lr )
     opt.zero_grad()
+    loader.createPool()
     display.initParams( epochs, bt_size, loader.set_size )
     its_per_ep = int( loader.set_size /bt_size )
 
@@ -148,13 +149,15 @@ def trainOnFullSet( display, log, net, loader, loss_func, optimizer, lr, epochs,
         #opt.zero_grad()
         
         display.newEpoch( epoch )
-        
+        ep_it = 0
+
         for bt_it in range( its_per_ep ):
             num_sl = num_slices[0] *num_slices[1] *num_slices[2]
             display.addBatch()
             bt_loss = 0
+            tr_loss = 0
             
-            batch, teacher = loader.getNextInput( bt_it )
+            batch, teacher = loader.getNextInput( bt_it, bt_size )
             for it in range( bt_size ):
                 inp, tch = sd.splitInputAndTeacher( batch[it], teacher[it], num_slices, net.ups )
                 for jt in range( num_sl ):
@@ -165,7 +168,7 @@ def trainOnFullSet( display, log, net, loader, loss_func, optimizer, lr, epochs,
                     output = net( input_data, loss_func.apply_sigmoid )
                     loss, root_loss, soil_loss = loss_func( output, teacher_data, epoch )
                     loss /=( bt_size ) *num_sl
-                    display.addComputed( it, jt, num_sl )
+                    display.computed( it, num_sl )
                     
                     bt_loss += loss.cpu().data.numpy()
                     tr_loss += loss.cpu().data.numpy()
@@ -183,20 +186,22 @@ def trainOnFullSet( display, log, net, loader, loss_func, optimizer, lr, epochs,
             opt.zero_grad()
             del loss
 
-            display.endBatch( bt_loss )
             del batch
             del teacher
            
-        tr_root_loss /= bt_size *num_sl
-        tr_soil_loss /= bt_size *num_sl
+            tr_root_loss /= bt_size *num_sl
+            tr_soil_loss /= bt_size *num_sl
         
-        #Log
-        cpu_loss = tr_loss 
-        log.logEpoch( epoch, cpu_loss, 0, tr_root_loss, tr_soil_loss )
+            #Log
+            cpu_loss = tr_loss 
+            log.logEpoch( ep_it, cpu_loss, 0, tr_root_loss, tr_soil_loss )
+            ep_it += 1
+            display.endBatch( cpu_loss )
+        
         del tr_loss
         del tr_root_loss
         del tr_soil_loss
-        if( epoch %5 == 0):
+        if( epoch %1 == 0):
             weights = net.getWeights()
             torch.cuda.empty_cache()
             output = feedForward( net, loader, 0, num_slices=num_slices )
@@ -209,7 +214,7 @@ def trainOnFullSet( display, log, net, loader, loss_func, optimizer, lr, epochs,
                 f1_s += evle( output[it][0,0,:,:,:], teacher[0,it,:,:,:], True )
             log.logF1Root( epoch, f1_r /4 )
             log.logF1Soil( epoch, f1_s /4 )
-            if( epoch %25 == 0 ): 
+            if( epoch %10 == 0 ): 
                 log.logMilestone( epoch, weights, output, cpu_loss, f1_r, f1_s )
         
         display.endEpoch( cpu_loss )
