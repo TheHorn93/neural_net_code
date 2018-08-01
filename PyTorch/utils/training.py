@@ -115,9 +115,11 @@ def training( display, log, net, loader_list, loss_func, optimizer, lr, epochs, 
         del tr_root_loss
         del tr_soil_loss
         if( epoch %5 == 0):
+            net.train = False
             weights = net.getWeights()
             torch.cuda.empty_cache()
             output = feedForward( net, loader, 0, num_slices=num_slices )
+            net.train = True
             log.logWeights( weights )
             teacher = loader.getTeacherNp( 0, 4, net.ups, loader.offset )
             f1_r = np.array([0.0,0.0,0.0])
