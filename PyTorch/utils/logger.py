@@ -242,7 +242,7 @@ class Log:
         if not os.path.exists( folder ):
             os.makedirs( folder )
         file = open( folder +"Evaluation.txt", "w" )
-        file.write( "Net: " +network.getStructure() +"\n" )
+        file.write( "Net: " +network +"\n" )
         file.write( "Loss: " +str(loss) +" Loss RT: " +str(loss_rt) + " Loss SL: " +str(loss_sl) + "\n")
         file.close()
 

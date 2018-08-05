@@ -171,7 +171,7 @@ class FeedInstance:
             
         if data_usage[3]:
             loader = data_loader.FullSetValidationLoader( input_path, net.teacher_offset, net.ups, device )
-            val.FullSetEvaluation( net, loader, self.log )
+            validation.FullSetEvaluation( net, loader, self.log )
             
             
 
