@@ -138,29 +138,38 @@ def trainOnFullSet( display, log, net, loader, loss_func, optimizer, lr, epochs,
     evle = evaluator.F1Score()
     opt = optimizer( net, lr )
     opt.zero_grad()
-    loader.createPool()
+    #loader.createPool()
     display.initParams( epochs, bt_size, loader.set_size )
     its_per_ep = int( loader.set_size /bt_size )
+    ep_it = 0
 
     for epoch in range( 1, epochs+1 ):
+        loader.newEpoch()
         tr_loss = 0.0
         tr_root_loss = 0.0
         tr_soil_loss = 0.0
         #opt.zero_grad()
         
         display.newEpoch( epoch )
-        ep_it = 0
 
         for bt_it in range( its_per_ep ):
-            num_sl = num_slices[0] *num_slices[1] *num_slices[2]
-            display.addBatch()
-            bt_loss = 0
-            tr_loss = 0
+            display.startBatch()
+            #num_sl = num_slices[0] *num_slices[1] *num_slices[2]
+            bt_loss = 0.0
+            bt_root_loss = 0.0
+            bt_soil_loss = 0.0
             
-            batch, teacher = loader.getNextInput( bt_it, bt_size )
+            batch, teacher, key_list = loader.getNextInput( bt_it, bt_size )
+            display.addBatch( key_list )
             for it in range( bt_size ):
-                inp, tch = sd.splitInputAndTeacher( batch[it], teacher[it], num_slices, net.ups )
+                if batch[it].size()[2] > 200:
+                    nm_slc = [3*num_slices[0],num_slices[1],num_slices[2]]
+                else:
+                    nm_slc = num_slices
+                num_sl = nm_slc[0] *nm_slc[1] *nm_slc[2]
+                inp, tch = sd.splitInputAndTeacher( batch[it], teacher[it], nm_slc, net.ups )
                 for jt in range( num_sl ):
+                    #display.addLine("THIS IS IT: " +str(jt) +" off " +str(len(inp))+"\n")
                     input_data = inp[jt]
                     teacher_data = tch[jt]
                     
@@ -168,36 +177,43 @@ def trainOnFullSet( display, log, net, loader, loss_func, optimizer, lr, epochs,
                     output = net( input_data, loss_func.apply_sigmoid )
                     loss, root_loss, soil_loss = loss_func( output, teacher_data, epoch )
                     loss /=( bt_size ) *num_sl
-                    display.computed( it, num_sl )
+                    display.computed( it, (jt+1) /num_sl )
                     
                     bt_loss += loss.cpu().data.numpy()
                     tr_loss += loss.cpu().data.numpy()
                     loss.backward()
 
-                tr_root_loss += root_loss.cpu().data.numpy()
-                tr_soil_loss += soil_loss.cpu().data.numpy()
+                    bt_root_loss += root_loss.cpu().data.numpy() /num_sl 
+                    bt_soil_loss += soil_loss.cpu().data.numpy() /num_sl
+
+                opt.step()
+                opt.zero_grad()
 
                 del inp
                 del tch
                 del root_loss
                 del soil_loss
                 
-            opt.step()
-            opt.zero_grad()
+            #opt.step()
+            #opt.zero_grad()
             del loss
 
             del batch
             del teacher
            
-            tr_root_loss /= bt_size *num_sl
-            tr_soil_loss /= bt_size *num_sl
+            bt_root_loss /= bt_size
+            bt_soil_loss /= bt_size
         
             #Log
-            cpu_loss = tr_loss 
-            log.logEpoch( ep_it, cpu_loss, 0, tr_root_loss, tr_soil_loss )
+            tr_root_loss += bt_root_loss
+            tr_soil_loss += bt_soil_loss
+            cpu_loss = bt_loss 
+            log.logEpoch( ep_it, cpu_loss, 0, bt_root_loss, bt_soil_loss )
             ep_it += 1
             display.endBatch( cpu_loss )
         
+        ep_loss = tr_loss /its_per_ep
+        log.endEpoch( epoch, ep_loss, tr_root_loss /its_per_ep, tr_soil_loss /its_per_ep )
         del tr_loss
         del tr_root_loss
         del tr_soil_loss
@@ -214,8 +230,6 @@ def trainOnFullSet( display, log, net, loader, loss_func, optimizer, lr, epochs,
                 f1_s += evle( output[it][0,0,:,:,:], teacher[0,it,:,:,:], True )
             log.logF1Root( epoch, f1_r /4 )
             log.logF1Soil( epoch, f1_s /4 )
-            if( epoch %10 == 0 ): 
+            if( epoch %2 == 0 ): 
                 log.logMilestone( epoch, weights, output, cpu_loss, f1_r, f1_s )
         
-        display.endEpoch( cpu_loss )
-    

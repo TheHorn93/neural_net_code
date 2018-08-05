@@ -79,6 +79,7 @@ class Instance:
         if self.data[0] == "Full":
             display = curses_out.DisplayFullSet( stdscr, self.net.getStructure(), instance_string )
             self.loader = data_loader.FullSetLoader( input_path, self.net.teacher_offset, self.net.ups, device )
+            self.loader.createPool( float(self.data[1]) )
             training.trainOnFullSet( display, self.log, self.net, self.loader, self.loss, self.opt, self.lr, self.epochs, self.batch_size, self.slices )
         else:
             display = curses_out.Display( stdscr, self.net.getStructure(), instance_string )

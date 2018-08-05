@@ -174,13 +174,21 @@ class DisplayFullSet:
         self.screen.addstr( line, 20, bar_str, curses.A_BOLD )
         self.screen.addstr( line, 20 +length_bar +5, str(int(progress *100)) +"%" )
             
-    def addBatch( self ):
+    def startBatch( self ):
+        self.st_pt = timeit.default_timer()
+
+
+    def addBatch( self, key_list ):
+        self.key_list = key_list
+        self.ed_pt = timeit.default_timer()
+        self.load_time = self.ed_pt -self.st_pt
         self.st_pt = timeit.default_timer()
         for it in range( self.sc_per_bt ):
             cur_line = self.scan_lines[0] +it
             self.clrLine( cur_line )
             self.screen.addstr( cur_line, 0, "  Scan " +"{:>2}".format( str(it+1) ) +": ", curses.A_BOLD )
             self.screen.addstr( cur_line, 11, "{:>4}".format( "0%" ), curses.color_pair(3) )
+            self.screen.addstr( cur_line, 17, str(key_list[it]), curses.color_pair(4) )
         self.screen.refresh()
             
     def computed( self, it, prog ):
@@ -192,24 +200,30 @@ class DisplayFullSet:
             clr = 2
         self.screen.addstr( cur_line, 0, "  Scan " +"{:>2}".format( str(it+1) ) +": ", curses.A_BOLD )
         self.screen.addstr( cur_line, 11, "{:>4}".format( str(int(prog*100)) +"%" ), curses.color_pair(clr) )
+        self.screen.addstr( cur_line, 17, str(self.key_list[it]), curses.color_pair(4) )
         self.screen.refresh()
         
     def endBatch( self, train_loss ):
         cur_line = self.scan_lines[1] +2
         self.bt_ed_pt = timeit.default_timer()
         self.time = self.bt_ed_pt -self.st_pt
-        self.avg_time += self.time
+        self.avg_time += self.time +self.load_time
         self.it += 1
         self.clrBlock( ( cur_line, cur_line +2 ) )
         self.screen.addstr( cur_line, 0, "Train Loss: " )
         self.screen.addstr( cur_line, 12, str(train_loss), curses.A_BOLD | curses.color_pair(1) ) 
         self.screen.addstr( cur_line +1, 0, "  Run Time: ", curses.color_pair(4) )
-        self.screen.addstr( cur_line +1, 12, str( self.time ) ) 
+        self.screen.addstr( cur_line +1, 12, str( self.time +self.load_time ) ) 
         self.screen.addstr( cur_line +2, 0, "  Avg Time: ", curses.color_pair(4) )
         self.screen.addstr( cur_line +2, 12, str( self.avg_time /self.it ) ) 
+        self.screen.addstr( cur_line +3, 0, "  Load Time: ", curses.color_pair(4) )
+        self.screen.addstr( cur_line +3, 13, str( self.load_time ) )
         self.sc_comp += self.sc_per_bt
         self.createProgressBar( 7, self.sc_comp )
         self.screen.refresh()
+
+    def addLine( self, line ):
+        self.log_file.write( line )
         
         
         

@@ -45,7 +45,7 @@ class FullSetLoader:
         
     
     def keyToPath( self, key ):
-        path =self.input_path +"/"
+        path ="" #self.input_path +"/"
         path += key[0] +"/"
         if key[6] == "1.0":
             key[6] = "1.00"
@@ -88,18 +88,21 @@ class FullSetLoader:
         
         
     def getNextInput( self, it, bt_size=10 ):
-        key = self.pool[it,:]
-        inp_path, teacher_path = self.keyToPath( key )
+        str_it = it *bt_size
         inp_list = []
         gt_list = []
-        for it in range( bt_size ):
-            inp, gt = self.loadInput( inp_path, teacher_path )
+        key_list = []
+        for b_it in range( bt_size ):
+            key = self.pool[str_it+ b_it,:]
+            inp_path, teacher_path = self.keyToPath( key )
+            inp, gt = self.loadInput( self.input_path +inp_path, self.input_path +teacher_path )
             if self.is_cuda is not None:
                 inp = inp.cuda()
                 gt = gt.cuda()
             inp_list.append( inp )
             gt_list.append( gt )
-        return inp_list, gt_list
+            key_list.append( key )
+        return inp_list, gt_list, key_list
         
         
     def loadInput( self, inp_path, teacher_path ):

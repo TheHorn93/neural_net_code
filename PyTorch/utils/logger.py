@@ -32,6 +32,9 @@ class DummyLogger:
 
     def logWeights( self, weight_list, path="" ):
         pass
+
+    def endEpoch( self, epoch, loss, rt_loss, so_loss ):
+        pass
     
 
 class Logger:
@@ -46,8 +49,11 @@ class Logger:
         self.vis = visdom.Visdom( env=self.folder )
         self.train_loss = self.vis.line(np.array([0]), win="train_loss", opts=dict(title="Train Loss"))
         self.eval_loss = self.vis.line(np.array([0]), win="eval_loss", opts=dict(title="Eval Loss"))
-        self.eval_loss = self.vis.line(np.array([0]), win="root_loss", opts=dict(title="Root Loss"))
-        self.eval_loss = self.vis.line(np.array([0]), win="soil_loss", opts=dict(title="Soil Loss"))
+        self.root_loss = self.vis.line(np.array([0]), win="root_loss", opts=dict(title="Root Loss"))
+        self.soil_loss = self.vis.line(np.array([0]), win="soil_loss", opts=dict(title="Soil Loss"))
+        self.ep_tr_loss = self.vis.line(np.array([0]), win="ep_train_loss", opts=dict(title="Ep Loss"))
+        self.ep_rt_loss = self.vis.line(np.array([0]), win="ep_rt_loss", opts=dict(title="Ep Rt Loss"))
+        self.ep_sl_loss = self.vis.line(np.array([0]), win="ep_sl_loss", opts=dict(title="Rp Sl Loss"))
         self.f1_score_r = self.vis.line(np.array([0]), win="f1_score_r", opts=dict(title="F1-Score Root"))
         self.re_score_r = self.vis.line(np.array([0]), win="re_score_r", opts=dict(title="Recall Root"))
         self.pre_score_r = self.vis.line(np.array([0]), win="pre_score_r", opts=dict(title="Precision Root"))
@@ -88,6 +94,15 @@ class Logger:
         self.vis.line( np.array([soil_loss]), ep, win="soil_loss", update="append" )
         file = open( self.folder_path + "loss.txt", "a" )
         file.write( str( epoch ) + ": " + str(train_err) +", " +str(root_loss) +", " +str(soil_loss) +"\n" )
+        file.close()
+
+    def endEpoch( self, epoch, loss, rt_loss, sl_loss ):
+        ep = np.array([epoch])
+        self.vis.line( np.array([loss]), ep, win="ep_train_loss", update="append" )
+        self.vis.line( np.array([rt_loss]), ep, win="ep_rt_loss", update="append" )
+        self.vis.line( np.array([sl_loss]), ep, win="ep_sl_loss", update="append" )
+        file = open( self.folder_path +"ep_loss.txt", "a" )
+        file.write( str(epoch) +": " +str(loss) +", " +str(rt_loss) +", " +str(sl_loss) +"\n")
         file.close()
         
     def logF1Root( self, epoch, f1_t ):
@@ -221,6 +236,7 @@ class Log:
             for it_key, val in dic.items():
                 file.write( "   " +it_key +": " +str(val) +"\n" )
         file.close()
+
         
      
 #a = np.random.rand( 1,1,3,3,3 )
