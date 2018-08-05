@@ -83,3 +83,20 @@ class ValidationResult:
             it += 1
         return out_dic
  
+
+def FullSetEvaluation( network, loader, log ):
+    loss_func = losses.CrossEntropy( 0 )
+    loader.createPool()
+    eval_loss, eval_loss_rt, eval_loss_sl = 0.0, 0.0, 0.0
+    while loader.it < loader.set_size:
+        inp, gt, key = loader. 
+        output = network( inp, loss_func.apply_sigmoid )
+        loss, loss_rt, loss_sl = loss_func( output, gt, 1 )
+        eval_loss += loss
+        eval_loss_rt = loss_rt
+        eval_loss_sl = loss_sl
+    eval_loss = eval_loss.cpu().data.numpy() /loader.set_size
+    eval_loss_rt = eval_loss_rt.cpu().data.numpy() /loader.set_size
+    eval_loss_sl = eval_loss_sl.cpu().data.numpy() /loader.set_size
+    log.saveEvalResults( network.getStructure, eval_loss, eval_loss_rt, eval_loss_sl )
+    

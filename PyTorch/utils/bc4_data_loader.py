@@ -210,7 +210,105 @@ class FullSetLoader:
             torch_teacher = torch_teacher.cuda(self.is_cuda)
             
         return torch_batch, torch_teacher
+
+
+class FullSetValidationLoader:
     
+    def __init__( self, input_path, offset, ups, is_cuda=-1 ):
+        self.input_path = input_path
+        self.dataset_path = input_path +"dataset/2018_07_30_16_42_10/"
+        self.init = False
+        self.offset = int(offset)
+        self.ups = ups
+        self.is_cuda = is_cuda
+        self.r_fac_dic = ["r_factor_0.34/","r_factor_0.71/","r_factor_1.00/","r_factor_1.41/"]
+        self.rot_dic = ["rot_0/","rot_60/","rot_120/"]
+        self.x_flip_dic = ["x_flip_0/","x_flip_1/"]
+        self.y_flip_dic = ["y_flip_0/","y_flip_1/"]
+        self.swap_dic = ["x_y_swap_0/","x_y_swap_1/"]
+        self.c_dic = ["g","h","l"]
+        self.key = "256x256x120"
+        self.up_key = "512x512x240"
+        self.data_size=[120,256,256]
+        self.data_size_ups=[240,512,512]
+        self.key = "256x256x128"
+        self.up_key = "512x512x256"
+        self.data_size=[128,256,256]
+        self.data_size_ups=[256,512,512]
+        self.key = "183x183x613"
+        self.up_key = "366x366x1226"
+        self.data_size=[138,138,613]
+        self.data_size_ups=[366,366,1226]
+        self.threshold = 63
+        
+    
+    def keyToPath( self, key ):
+        path ="" #self.input_path +"/"
+        path += key[0] +"/"
+        if key[6] == "1.0":
+            key[6] = "1.00"
+        path += "r_factor_" +key[6] +"/"
+        path += "rot_" +key[2] +"/"
+        path += "x_flip_" +key[3] +"/"
+        path += "y_flip_" +key[4] +"/"
+        path += "x_y_swap_" +key[5] +"/"
+        if key[0] == "lupine_small_xml":
+            scan_key = "256x256x128"
+            if self.ups:
+                teacher_path = path +"512x512x256_occupancy.npz"
+            else:
+                teacher_path = path +"256x256x128_occupancy.npz"
+        elif key[0] == "gtk":
+            scan_key = "183x183x613"
+            if self.ups:
+                teacher_path = path +"366x366x1226_occupancy.npz"
+            else:
+                teacher_path = path +"183x183x613_occupancy.npz"
+        elif key[0] == "Lupine_22august":
+            scan_key = "256x256x120"
+            if self.ups:
+                teacher_path = path +"512x512x240_occupancy.npz"
+            else:
+                teacher_path = path +"256x256x120_occupancy.npz"
+        file_path = path+ scan_key +"/" +getFilename( int(key[7])-1, key[1] )
+        return file_path, teacher_path
+        
+    
+    def createPool( self ):
+        validation_set_key = np.loadtxt( self.dataset_path +"validation_set.txt", dtype=str )
+        self.set_size = validation_set_key.shape[0]
+        self.pool = validation_set_key[]
+        self.it = 0
+        
+    
+    def getNextInput( self ):
+        key = self.pool[self.it,:]
+        inp_path, teacher_path = self.keyToPath( key )
+        inp, gt = self.loadInput( self.input_path +inp_path, self.input_path +teacher_path )
+        if self.is_cuda is not None:
+            inp = inp.cuda()
+            gt = gt.cuda()
+        self.it += 1
+        return inp, gt, key
+    
+    def loadInput( self, inp_path, teacher_path ):
+        inp = np.load( inp_path )[:,0,:,:]
+        gt = np.load( teacher_path )["arr_0"]
+        gt = np.moveaxis( gt, 2, 0 )
+        inp = inp.astype( np.float32 ) /255
+        gt = np.where( gt > self.threshold, 1, 0 )
+        
+        inp_resized = np.zeros( (1,1,inp.shape[0] +(self.offset*2), inp.shape[1] +(self.offset*2), inp.shape[2] +(self.offset*2)) )
+        gt_resized = np.empty( (1, 1 ,inp.shape[0], inp.shape[1], inp.shape[2] ) )
+        inp_resized[0,0,offset:-offset,offset:-offset,offset:-offset] = inp
+        gt_resized[0,0,:,:,:] = gt
+        
+        inp_resized = torch.Tensor( inp_resized )
+        gt_resized = torch.Tensor( gt_resized )
+        
+        return inp_resized, gt_resized
+
+
 
 class BatchLoader:
     

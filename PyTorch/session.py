@@ -169,6 +169,11 @@ class FeedInstance:
             val.fillDictionary()
             self.log.saveValResults( val.results, val.val_dic, epoch_str )
             
+        if data_usage[3]:
+            loader = data_loader.FullSetValidationLoader( input_path, net.teacher_offset, net.ups, device )
+            val.FullSetEvaluation( net, loader, self.log )
+            
+            
 
 class Session:
     
@@ -211,7 +216,7 @@ class Session:
                 if self.mode == 'show':
                     self.show()
                 elif self.mode == 'run':
-                    self.feedSession( cmd.data, ( cmd.real, cmd.synth, cmd.vali ) )
+                    self.feedSession( cmd.data, ( cmd.real, cmd.synth, cmd.vali, cmd.eval ) )
                 elif self.mode == 'read':
                     log_list = arg_parser.readFromFile( cmd.input[0] )
                     for arg in log_list:

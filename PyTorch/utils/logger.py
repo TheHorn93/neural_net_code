@@ -236,6 +236,15 @@ class Log:
             for it_key, val in dic.items():
                 file.write( "   " +it_key +": " +str(val) +"\n" )
         file.close()
+        
+    def saveEvalResults( self, network, loss, loss_rt, loss_sl, path="" ):
+        folder = self.log_path +path
+        if not os.path.exists( folder ):
+            os.makedirs( folder )
+        file = open( folder +"Evaluation.txt", "w" )
+        file.write( "Net: " +network.getStructure() +"\n" )
+        file.write( "Loss: " +str(loss) +" Loss RT: " +str(loss_rt) + " Loss SL: " +str(loss_sl) + "\n")
+        file.close()
 
         
      
