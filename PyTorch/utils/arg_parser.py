@@ -33,7 +33,7 @@ class FeedParser():
         self.add = self.mode.add_parser( "add", help="Add log to list" )
         self.add.set_defaults( mode="add" )
         self.add.add_argument("-l", "--log", help="Path to log to load from (required)" , nargs=1, required=True )
-        self.add.add_argument("-e", "--epoch", help="Specific epoch to load from", nargs=1, default=None )
+        self.add.add_argument("-e", "--epoch", help="Specific epoch to load from", nargs="+", default=None )
         
         self.read = self.mode.add_parser( "read", help="Read from conf file" )
         self.read.set_defaults( mode="read" )

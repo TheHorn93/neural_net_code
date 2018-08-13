@@ -222,7 +222,8 @@ class Session:
                     for arg in log_list:
                         print(arg)
                         new_inst = self.parser( arg.split() )
-                        self.instances.append( FeedInstance( new_inst.log[0], new_inst.epoch[0] ) )
+                        for ep in new_inst.epoch:
+                            self.instances.append( FeedInstance( new_inst.log[0], ep ) )
             except SystemExit:
                 pass
     

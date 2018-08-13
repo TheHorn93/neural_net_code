@@ -243,7 +243,7 @@ class FullSetValidationLoader:
         self.up_key = "366x366x1226"
         self.data_size=[138,138,613]
         self.data_size_ups=[366,366,1226]
-        self.threshold = 63
+        self.threshold = 127
         
     
     def keyToPath( self, key ):
