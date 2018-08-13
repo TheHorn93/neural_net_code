@@ -67,7 +67,7 @@ class Instance:
         if debug_mode:
             self.log = logger.DummyLogger( logging_path )
         else:
-            self.log = logger.Logger( logging_path )
+            self.log = logger.Logger( logging_path, self.net.getStructure() +", loss=" +str(self.loss) +", lr=" +str(self.lr))
         instance_string = "Training: loss="+ str( self.loss ) +", lr=" +str( self.lr ) + ", opt="+ str( self.opt ) +"\n" +"Data: data="+ str( self.data ) +", batch_size=" +str( self.batch_size ) +", slices=" +str( self.slices ) 
         child_str = ""
         for _, layer in enumerate( self.net.children() ):

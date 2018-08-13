@@ -39,7 +39,7 @@ class DummyLogger:
 
 class Logger:
     
-    def __init__( self, path ):
+    def __init__( self, path, structure ):
         self.folder = time.strftime( "%Y-%m-%d_%H%M%S" )
         self.folder_path = path + self.folder +"/"
         if not os.path.exists( self.folder_path ):
@@ -64,7 +64,7 @@ class Logger:
         
     
     def masterLog( self, structure, instance, pt_str ):
-        self.vis.text( structure, win="structure" )
+        self.vis.text( structure +"\n" +instance, win="structure" )
         str_file = open( self.folder_path + "model.txt", "a" )
         str_file.write( structure )
         str_file.close()
@@ -241,7 +241,7 @@ class Log:
         folder = self.log_path +path
         if not os.path.exists( folder ):
             os.makedirs( folder )
-        file = open( folder +"Evaluation.txt", "w" )
+        file = open( folder +"Evaluation.txt", "a" )
         file.write( "Net: " +network +"\n" )
         file.write( "Loss: " +str(loss) +" Loss RT: " +str(loss_rt) + " Loss SL: " +str(loss_sl) + "\n")
         file.close()

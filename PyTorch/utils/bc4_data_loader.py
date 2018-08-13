@@ -112,8 +112,12 @@ class FullSetLoader:
         inp = inp.astype( np.float32 ) /255
         gt = np.where( gt > self.threshold, 1, 0 )
         
+        if self.ups:
+            mult = 2
+        else:
+            mult = 1
         inp_resized = np.empty( (1,1,inp.shape[0], inp.shape[1], inp.shape[2]) )
-        gt_resized = np.empty( (1, 1 ,inp.shape[0] -int(self.offset*2), inp.shape[1] -int(self.offset*2), inp.shape[2] -int(self.offset*2) ) )
+        gt_resized = np.empty( (1, 1 ,inp.shape[0]*mult -int(self.offset*2), inp.shape[1]*mult -int(self.offset*2), inp.shape[2]*mult -int(self.offset*2) ) )
         inp_resized[0,0,:,:,:] = inp
         gt_resized[0,0,:,:,:] = gt[self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset]
         
@@ -298,8 +302,12 @@ class FullSetValidationLoader:
         inp = inp.astype( np.float32 ) /255
         gt = np.where( gt > self.threshold, 1, 0 )
         
+        if self.ups:
+            mult = 2
+        else:
+            mult = 1
         inp_resized = np.zeros( (1,1,inp.shape[0] +(self.offset*2), inp.shape[1] +(self.offset*2), inp.shape[2] +(self.offset*2)) )
-        gt_resized = np.empty( (1, 1 ,inp.shape[0], inp.shape[1], inp.shape[2] ) )
+        gt_resized = np.empty( (1, 1 ,inp.shape[0]*mult, inp.shape[1]*mult, inp.shape[2]*mult ) )
         inp_resized[0,0,self.offset:-self.offset,self.offset:-self.offset,self.offset:-self.offset] = inp
         gt_resized[0,0,:,:,:] = gt
         
