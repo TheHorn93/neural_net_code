@@ -156,7 +156,7 @@ class CrossEntropyDynamic( LossDynaBase ):
         
         soil = torch.add( torch.ones_like(teacher), -teacher )
         soil_loss = torch.div( torch.mul( soil, loss_out ), soil.sum() ).sum()
-        root_loss = torch.div( torch.mul( teacher, loss_out ), teacher.sum() ).sum()
+        root_loss = torch.div( torch.mul( teacher, loss_out ), teacher.sum()+1e-15 ).sum()
         
         #Weighting
         loss_out = self.weighting( loss_out, teacher, soil, epoch )
