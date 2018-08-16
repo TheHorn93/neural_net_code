@@ -237,13 +237,15 @@ class Log:
                 file.write( "   " +it_key +": " +str(val) +"\n" )
         file.close()
         
-    def saveEvalResults( self, network, loss, loss_rt, loss_sl, path="" ):
+    def saveEvalResults( self, network, loss, loss_rt, loss_sl, f1, path="" ):
         folder = self.log_path +path
         if not os.path.exists( folder ):
             os.makedirs( folder )
         file = open( folder +"Evaluation.txt", "a" )
-        file.write( "Net: " +network +"\n" )
-        file.write( "Loss: " +str(loss) +" Loss RT: " +str(loss_rt) + " Loss SL: " +str(loss_sl) + "\n")
+        file.write( str(loss) +", " +str(loss_rt) + ", " +str(loss_sl) + "\n")
+        file.close()
+        file = open( folder +"F1.txt", "a" )
+        file.write( str( f1[0] ) +", " +str( f1[1] ) +", " +str( f1[2] ) +"\n")
         file.close()
 
         

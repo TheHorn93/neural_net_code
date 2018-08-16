@@ -8,6 +8,7 @@ Created on Sun Jun 17 19:08:29 2018
 
 import numpy as np
 import losses
+import evaluator
 
 class ValidationResult:
 
@@ -86,6 +87,8 @@ class ValidationResult:
 
 def FullSetEvaluation( network, loader, log ):
     loss_func = losses.CrossEntropy( 0 )
+    f1 = evaluator.F1Score()
+    f1_score = np.array([0.0,0.0,0.0])
     loader.createPool()
     eval_loss, eval_loss_rt, eval_loss_sl = 0.0, 0.0, 0.0
     while loader.it < loader.set_size:
@@ -95,10 +98,12 @@ def FullSetEvaluation( network, loader, log ):
         eval_loss += loss.cpu().data.numpy()
         eval_loss_rt += loss_rt.cpu().data.numpy()
         eval_loss_sl += loss_sl.cpu().data.numpy()
+        f1_score += f1( output[0,0,:,:,:], gt[0,0,:,:,:] )
         del inp, gt, loss, loss_rt, loss_sl
         print( str(loader.it) +"/" +str(loader.set_size) +"   " +str(key), end="\r"  )
     eval_loss = eval_loss /loader.set_size
     eval_loss_rt = eval_loss_rt /loader.set_size
     eval_loss_sl = eval_loss_sl /loader.set_size
-    log.saveEvalResults( network.getStructure(), eval_loss, eval_loss_rt, eval_loss_sl )
+    f1_score /= loader.set_size
+    log.saveEvalResults( network.getStructure(), eval_loss, eval_loss_rt, eval_loss_sl, f1_score )
     
