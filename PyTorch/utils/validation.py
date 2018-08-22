@@ -9,6 +9,7 @@ Created on Sun Jun 17 19:08:29 2018
 import numpy as np
 import losses
 import evaluator
+import split_data
 
 class ValidationResult:
 
@@ -85,19 +86,28 @@ class ValidationResult:
         return out_dic
  
 
-def FullSetEvaluation( network, loader, log ):
+def FullSetEvaluation( network, loader, log, splits ):
     loss_func = losses.CrossEntropy( 0 )
     f1 = evaluator.F1Score()
     f1_score = np.array([0.0,0.0,0.0])
     loader.createPool()
     eval_loss, eval_loss_rt, eval_loss_sl = 0.0, 0.0, 0.0
+    num_splits = splits[0] +splits[1] +splits[2]
     while loader.it < loader.set_size:
         inp, gt, key = loader.getNextInput() 
-        output = network( inp, loss_func.apply_sigmoid )
-        loss, loss_rt, loss_sl = loss_func( output, gt, 1 )
-        eval_loss += loss.cpu().data.numpy()
-        eval_loss_rt += loss_rt.cpu().data.numpy()
-        eval_loss_sl += loss_sl.cpu().data.numpy()
+        inp_l, gt_l, w_l = split_data.validationSplit( inp, gt, splits, network.ups )
+        comp_loss, comp_rt_loss, comp_sl_loss = 0,0,0
+        for it in range( len(inp_l) ): 
+            output = network( inp_l[it], loss_func.apply_sigmoid )
+            loss, loss_rt, loss_sl = loss_func( output, gt_l[it], 1 )
+            comp_loss += loss /num_splits
+            comp_rt_loss += loss_rt *w_l[it][0] /num_splits
+            comp_sl_loss += loss_sl *w_l[it][1] /num_splits
+            del inp_l
+            del gt_l
+        eval_loss += comp_loss.cpu().data.numpy()
+        eval_loss_rt += comp_sl_loss.cpu().data.numpy()
+        eval_loss_sl += comp_rt_loss.cpu().data.numpy()
         f1_score += f1( output[0,0,:,:,:], gt[0,0,:,:,:] )
         del inp
         del gt

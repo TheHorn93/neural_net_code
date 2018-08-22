@@ -52,8 +52,23 @@ def reassemble( split_list, num_splits ):
             pos_y = n_pos_y
         pos_x = n_pos_x
     return out
-                
-                
+
+def validationSplit( tensor, teacher, num_splits, ups=False ):
+    num_roots = teacher.sum()
+    soil = torch.ones_like( teacher ) - teacher
+    num_soil = soil.sum()
+    inp, tch = splitInputAndTeacher( tensor, teacher, num_splits, ups )
+    weights = []
+    w1,w2=0,0
+    for split in tch:
+        w_r = split.sum() /num_roots
+        w_s = ( torch.ones_like(split) -split ).sum() /num_soil
+        weights.append( (w_r,w_s) )
+        w1 += w_r
+        w2 += w_s
+    print( str(w1) +" <> " +str(w2) )
+    return inp, tch, weights
+               
 def splitInputAndTeacher( tensor, teacher, num_splits, ups=False ): 
     if not ups:
         offset = tensor.size()[2] -teacher.size()[2]
