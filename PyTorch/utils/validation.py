@@ -103,12 +103,17 @@ def FullSetEvaluation( network, loader, log, splits ):
             comp_loss += loss /num_splits
             comp_rt_loss += loss_rt *w_l[it][0] /num_splits
             comp_sl_loss += loss_sl *w_l[it][1] /num_splits
-            del inp_l
-            del gt_l
+            f1_temp = f1( output[0,0,:,:,:], gt_l[it][0,0,:,:,:] )
+            f1_temp[0] /= num_splits
+            w_f1 = w_l[it][0] /num_splits
+            f1_temp[1] /= w_f1
+            f1_temp[2] /= w_f1
+            f1_score += f1_temp
+        del inp_l
+        del gt_l
         eval_loss += comp_loss.cpu().data.numpy()
         eval_loss_rt += comp_sl_loss.cpu().data.numpy()
         eval_loss_sl += comp_rt_loss.cpu().data.numpy()
-        f1_score += f1( output[0,0,:,:,:], gt[0,0,:,:,:] )
         del inp
         del gt
         del loss

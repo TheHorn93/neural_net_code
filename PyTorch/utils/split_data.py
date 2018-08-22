@@ -66,7 +66,7 @@ def validationSplit( tensor, teacher, num_splits, ups=False ):
         weights.append( (w_r,w_s) )
         w1 += w_r
         w2 += w_s
-    print( str(w1) +" <> " +str(w2) )
+    #print( str(w1) +" <> " +str(w2) )
     return inp, tch, weights
                
 def splitInputAndTeacher( tensor, teacher, num_splits, ups=False ): 

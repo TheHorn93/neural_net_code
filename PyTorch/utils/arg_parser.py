@@ -34,7 +34,7 @@ class FeedParser():
         self.add.set_defaults( mode="add" )
         self.add.add_argument("-l", "--log", help="Path to log to load from (required)" , nargs=1, required=True )
         self.add.add_argument("-e", "--epoch", help="Specific epoch to load from", nargs="+", default=None )
-        
+        self.add.add_argument("-s", "--splits", help="Number of splits for input data", nargs=3, default=[1,1,1])
         self.read = self.mode.add_parser( "read", help="Read from conf file" )
         self.read.set_defaults( mode="read" )
         self.read.add_argument( "-i", "--input", help="Read Log Paths from File", default=["/home/work/horn/code/neural_net_code/PyTorch/feed.conf"] )

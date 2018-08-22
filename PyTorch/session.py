@@ -121,10 +121,14 @@ class LogInstance( Instance ):
 
 class FeedInstance:
     
-    def __init__( self, log, epoch ):
+    def __init__( self, log, epoch, splits ):
         self.log = logger.Log( logging_path +log +"/" )
         self.epoch = epoch
         self.net_parser = arg_parser.NetworkParser()
+        self.splits = []
+        self.splits.append( int(splits[0]) )
+        self.splits.append( int(splits[1]) )
+        self.splits.append( int(splits[2]) )
         
     def __call__( self, data, data_usage ):
         print( "Loading Log: " +self.log.log_path ) 
@@ -171,7 +175,7 @@ class FeedInstance:
             
         if data_usage[3]:
             loader = data_loader.FullSetValidationLoader( input_path, net.teacher_offset, net.ups, device )
-            validation.FullSetEvaluation( net, loader, self.log )
+            validation.FullSetEvaluation( net, loader, self.log, self.splits )
             
             
 
@@ -212,7 +216,7 @@ class Session:
                 cmd = self.parser( new_cmd.split() )
                 self.mode = cmd.mode
                 if self.mode == 'add':
-                    self.instances.append( FeedInstance( cmd.log[0], cmd.epoch[0] ) )
+                    self.instances.append( FeedInstance( cmd.log[0], cmd.epoch[0], cmd.splits ) )
                 if self.mode == 'show':
                     self.show()
                 elif self.mode == 'run':
@@ -223,7 +227,7 @@ class Session:
                         print(arg)
                         new_inst = self.parser( arg.split() )
                         for ep in new_inst.epoch:
-                            self.instances.append( FeedInstance( new_inst.log[0], ep ) )
+                            self.instances.append( FeedInstance( new_inst.log[0], ep, new_inst.splits ) )
             except SystemExit:
                 pass
     
