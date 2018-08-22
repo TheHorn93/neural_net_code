@@ -127,6 +127,25 @@ class FullSetLoader:
         return inp_resized, gt_resized
     
     
+    def getDefaultSet( self ):
+        key_list = []
+        key_list.append( ["Lupine_22august","g","0","0","0","1","5"] )
+        key_list.append( ["Lupine_22august","d","0","1","0","1","5"] )
+        key_list.append( ["Lupine_22august","g","0","0","0","0","5"] )
+        key_list.append( ["Lupine_22august","d","1","0","0","0","5"] )
+        inp_list = []
+        gt_list = []
+        for key in key_list:
+            inp_path, teacher_path = self.keyToPath( key )
+            inp, gt = self.loadInput( self.input_path +inp_path, self.input_path +teacher_path )
+            if self.is_cuda is not None:
+                inp = inp.cuda()
+                gt = gt.cuda()
+            inp_list.append( inp )
+            gt_list.append( gt )
+        return inp_list, gt_list
+
+    
     def getTeacherNp( self, bt_nbr, bt_size, ups, offset = 0 ):
         #print( "Loading teacher " +str(bt_nbr) )
         

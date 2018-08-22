@@ -99,7 +99,11 @@ def FullSetEvaluation( network, loader, log ):
         eval_loss_rt += loss_rt.cpu().data.numpy()
         eval_loss_sl += loss_sl.cpu().data.numpy()
         f1_score += f1( output[0,0,:,:,:], gt[0,0,:,:,:] )
-        del inp, gt, loss, loss_rt, loss_sl
+        del inp
+        del gt
+        del loss
+        del loss_rt
+        del loss_sl
         print( str(loader.it) +"/" +str(loader.set_size) +"   " +str(key), end="\r"  )
     eval_loss = eval_loss /loader.set_size
     eval_loss_rt = eval_loss_rt /loader.set_size
