@@ -9,8 +9,10 @@ import evaluator
 import split_data as sd
 import numpy as np
 import torch
+import timeit
 from random import shuffle
 
+time = 0
 def feedForward( net, loader, bt_nbr = 0, bt_size = 4, num_slices=[1,1,1] ):
     batch, teacher = loader.getDefaultBatch( bt_nbr, bt_size )
     batch.requires_grad=False
@@ -22,7 +24,13 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4, num_slices=[1,1,1] ):
         #out_cpu_list = []
         #for input_data in split_list:
         #print( "COMPUTING" )
+        #time = 0
+        #for t__t in range(10):
+        #    st_pt = timeit.default_timer()
         output = net( batch[:,it,:,:,:].unsqueeze(1), True )
+        #    ed_pt = timeit.default_timer()
+        #    time += ed_pt - st_pt
+        #print( "TIME: " +str(time) )
         out_list.append( output.cpu().data.numpy() )
         #print( "DELETING" )
         del output
@@ -186,6 +194,7 @@ def trainOnFullSet( display, log, net, loader, loss_func, optimizer, lr, epochs,
                     bt_root_loss += root_loss.cpu().data.numpy() /num_sl 
                     bt_soil_loss += soil_loss.cpu().data.numpy() /num_sl
 
+                print("Memory:: " +str(torch.cuda.memory_allocated()/1024/1024))
                 opt.step()
                 opt.zero_grad()
 

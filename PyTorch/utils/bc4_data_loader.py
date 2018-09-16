@@ -235,6 +235,7 @@ class FullSetLoader:
         return torch_batch, torch_teacher
 
 
+import math
 class FullSetValidationLoader:
     
     def __init__( self, input_path, offset, ups, is_cuda=-1 ):
@@ -242,6 +243,10 @@ class FullSetValidationLoader:
         self.dataset_path = input_path +"dataset/2018_07_30_16_42_10/"
         self.init = False
         self.offset = int(offset)
+        if ups:
+            print( self.offset )
+            self.offset = math.ceil(self.offset /2.0)
+            #if self.offset != offset /2.0
         self.ups = ups
         self.is_cuda = is_cuda
         self.r_fac_dic = ["r_factor_0.34/","r_factor_0.71/","r_factor_1.00/","r_factor_1.41/"]
@@ -308,9 +313,9 @@ class FullSetValidationLoader:
         key = self.pool[self.it,:]
         inp_path, teacher_path = self.keyToPath( key )
         inp, gt = self.loadInput( self.input_path +inp_path, self.input_path +teacher_path )
-        if self.is_cuda is not None:
-            inp = inp.cuda()
-            gt = gt.cuda()
+        #if self.is_cuda is not None:
+        #    inp = inp.cuda()
+        #    gt = gt.cuda()
         self.it += 1
         return inp, gt, key
     

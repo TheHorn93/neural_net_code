@@ -79,6 +79,8 @@ def splitInputAndTeacher( tensor, teacher, num_splits, ups=False ):
     teacher_its = [ getSplitIts( teacher, 0, num_splits[0], ups ) ] 
     teacher_its.append( getSplitIts( teacher, 1, num_splits[1], ups ) )
     teacher_its.append( getSplitIts( teacher, 2, num_splits[2], ups ) )
+    #print(teacher_its)
+    #print(offset)
     teacher_splits = splitArray( teacher, teacher_its )
     tensor_splits = splitArray( tensor, teacher_its, offset, div )
     return tensor_splits, teacher_splits

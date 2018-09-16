@@ -92,33 +92,49 @@ def FullSetEvaluation( network, loader, log, splits ):
     f1_score = np.array([0.0,0.0,0.0])
     loader.createPool()
     eval_loss, eval_loss_rt, eval_loss_sl = 0.0, 0.0, 0.0
-    num_splits = splits[0] +splits[1] +splits[2]
+    n_splits = splits[0] *splits[1] *splits[2]
+    #print(network.teacher_offset)
     while loader.it < loader.set_size:
-        inp, gt, key = loader.getNextInput() 
-        inp_l, gt_l, w_l = split_data.validationSplit( inp, gt, splits, network.ups )
+        inp, gt, key = loader.getNextInput()
+        if( gt.size()[2] > 600 ):
+            cur_splits = (splits[0]*3,splits[1],splits[2])
+            num_splits = n_splits *3
+        else:
+            cur_splits = splits
+            num_splits = n_splits
+        inp_l, gt_l, w_l = split_data.validationSplit( inp, gt, cur_splits, network.ups )
         comp_loss, comp_rt_loss, comp_sl_loss = 0,0,0
-        for it in range( len(inp_l) ): 
-            output = network( inp_l[it], loss_func.apply_sigmoid )
-            loss, loss_rt, loss_sl = loss_func( output, gt_l[it], 1 )
-            comp_loss += loss /num_splits
-            comp_rt_loss += loss_rt *w_l[it][0] /num_splits
-            comp_sl_loss += loss_sl *w_l[it][1] /num_splits
-            f1_temp = f1( output[0,0,:,:,:], gt_l[it][0,0,:,:,:] )
-            f1_temp[0] /= num_splits
-            w_f1 = w_l[it][0] /num_splits
-            f1_temp[1] /= w_f1
-            f1_temp[2] /= w_f1
-            f1_score += f1_temp
-        del inp_l
-        del gt_l
-        eval_loss += comp_loss.cpu().data.numpy()
-        eval_loss_rt += comp_sl_loss.cpu().data.numpy()
-        eval_loss_sl += comp_rt_loss.cpu().data.numpy()
+        #print( str(inp.size()) +" -> " +str(gt.size()) )
+        #print( cur_splits )
         del inp
         del gt
-        del loss
-        del loss_rt
-        del loss_sl
+        for it in range( len(inp_l) ): 
+            inp_sp = inp_l[it].cuda()
+            gt_sp = gt_l[it].cuda()
+            output = network( inp_sp, loss_func.apply_sigmoid )
+            #print(str(inp_l[it].size()) + " = " +str(output.size()) +" <> " +str(gt_l[it].size()) )
+            loss, loss_rt, loss_sl = loss_func( output, gt_sp, 1 )
+            del inp_sp
+            del gt_sp
+            comp_loss += loss.cpu().data.numpy() /num_splits
+            comp_rt_loss += loss_rt.cpu().data.numpy() *w_l[it][0]
+            comp_sl_loss += loss_sl.cpu().data.numpy() *w_l[it][1]
+            f1_temp = f1( output[0,0,:,:,:], gt_l[it][0,0,:,:,:] )
+            f1_temp *= w_l[it][0]
+            f1_score += f1_temp
+            #print(str(f1_temp) +", w=" +str(w_l[it]) )
+            del output
+            del loss
+            del loss_rt
+            del loss_sl
+        eval_loss += comp_loss
+        eval_loss_rt += comp_sl_loss
+        eval_loss_sl += comp_rt_loss
+        #del inp
+        #del gt
+        del comp_loss
+        del comp_rt_loss
+        del comp_sl_loss
         print( str(loader.it) +"/" +str(loader.set_size) +"   " +str(key), end="\r"  )
     eval_loss = eval_loss /loader.set_size
     eval_loss_rt = eval_loss_rt /loader.set_size
@@ -126,3 +142,4 @@ def FullSetEvaluation( network, loader, log, splits ):
     f1_score /= loader.set_size
     log.saveEvalResults( network.getStructure(), eval_loss, eval_loss_rt, eval_loss_sl, f1_score )
     
+

@@ -119,6 +119,7 @@ class LogInstance( Instance ):
         self.net.setWeights( weights )
         super( LogInstance, self ).run( stdscr )
 
+import timeit
 class FeedInstance:
     
     def __init__( self, log, epoch, splits ):
@@ -145,7 +146,21 @@ class FeedInstance:
         if data_usage[0]:
             for it in range( len(data)):
                 rd_loader = data_loader.RealDataLoader( real_scan_path, data[it] , device )
-                output = training.feedForward( net, rd_loader, 0, 1 )
+                time = 0
+                memory = 0
+                mem_chd = 0
+                output = training.feedForward( net,rd_loader,0,1 )
+                #for it in range(10):
+                #st_pt = timeit.default_timer()
+                #output = training.feedForward( net, rd_loader, 0, 1 )
+                #st_ed = timeit.default_timer()
+                #time += st_ed-st_pt
+                    #del output
+                #memory += torch.cuda.memory_allocated( 0 )
+                #mem_chd += torch.cuda.memory_cached( 0 )
+                #print(memory)
+                #byte_to_mb = 1024*1024*10
+                #print( "Avg time=" +str(time/10) +" Memory usage=" +str(memory/byte_to_mb) +" Memory chached=" +str(mem_chd/byte_to_mb) )
                 self.log.visualizeOutputStack( output[0], epoch_str +"output/", str(it) +"/real/" )
                 if net.ups:
                     new_size = rd_loader.data_size_ups
