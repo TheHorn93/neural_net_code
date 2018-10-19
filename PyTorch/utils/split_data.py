@@ -8,6 +8,7 @@ Created on Sun Jun 10 21:21:45 2018
 
 import math
 import torch
+import numpy as np
 
 def reassemble( split_list, num_splits ):
     size = [ 1, 1, 0, 0, 0 ]
@@ -16,36 +17,36 @@ def reassemble( split_list, num_splits ):
     y_split = num_splits[2]
     for dim0 in range( num_splits[0] ):
         elem = split_list[list_it]
-        size[2] += elem.size()[2]
+        size[2] += elem.shape[2]
         list_it += x_split
     list_it = 0
     for dim1 in range( num_splits[1] ):
         elem = split_list[list_it]
-        size[3] += elem.size()[3]
+        size[3] += elem.shape[3]
         list_it += y_split
     list_it = 0
     for dim2 in range( num_splits[2] ):
         elem = split_list[list_it]
-        size[4] += elem.size()[4]
+        size[4] += elem.shape[4]
         list_it += 1
-    print("Size to reassemble: " +str(size))
-    out = torch.zeros( size )
+    #print("Size to reassemble: " +str(size))
+    out = np.zeros( size )
     pos_x = 0
     list_it = 0
     elem = split_list[list_it]
     for dim0 in range( num_splits[0] ):
         elem = split_list[list_it]
-        n_pos_x = pos_x +elem.size()[2]
+        n_pos_x = pos_x +elem.shape[2]
         pos_y = 0
         for dim1 in range( num_splits[1] ):
             elem = split_list[list_it]
-            n_pos_y = pos_y +elem.size()[3]
+            n_pos_y = pos_y +elem.shape[3]
             pos_z = 0
             for dim2 in range( num_splits[2] ):
                 elem = split_list[list_it]
-                n_pos_z = pos_z +elem.size()[4]
+                n_pos_z = pos_z +elem.shape[4]
                 #print( "IT: " +str(elem.size()) )
-                print( str(pos_x) +"-" +str( n_pos_x ) + "  " +str(pos_y) +"-" +str( n_pos_y ) + "  " +str(pos_z) +"-" +str( n_pos_z )  )
+                #print( str(pos_x) +"-" +str( n_pos_x ) + "  " +str(pos_y) +"-" +str( n_pos_y ) + "  " +str(pos_z) +"-" +str( n_pos_z )  )
                 out[ 0, 0 ,pos_x : n_pos_x, pos_y : n_pos_y, pos_z : n_pos_z ] = elem 
                 list_it += 1
                 pos_z = n_pos_z
@@ -83,6 +84,7 @@ def splitInputAndTeacher( tensor, teacher, num_splits, ups=False ):
     #print(offset)
     teacher_splits = splitArray( teacher, teacher_its )
     tensor_splits = splitArray( tensor, teacher_its, offset, div )
+    #print( "SIZE: " +str(tensor_splits[0].size()) )
     return tensor_splits, teacher_splits
 
 
@@ -131,19 +133,19 @@ def split( tensor, x_split, y_split, z_split ):
 #print( "" )
 #for t in teacher:
 #    print(t.size())
-import numpy as np
+#import numpy as np
 #import torch
-a = torch.rand( 1,1,100,100,100 )
+#a = torch.rand( 1,1,100,100,100 )
 #print(a)
 #a = np.random.randint( 10, size=(1,1,10,10,10) )
-print(a)
-splits = [2,7,2]
-spl = splitInputAndTeacher( a, a, splits )
-spl_np = []
-it = 0
-for sp in spl[0]:
-    print( str(it) +": " +str(sp.size()) )
-    it += 1
-    spl_np.append( sp.data.numpy() )
-out = reassemble( spl[0], splits )
-print( torch.sum(out -a) )
+#print(a)
+#splits = [2,7,2]
+#spl = splitInputAndTeacher( a, a, splits )
+#spl_np = []
+#it = 0
+#for sp in spl[0]:
+#    print( str(it) +": " +str(sp.size()) )
+#    it += 1
+#    spl_np.append( sp.data.numpy() )
+#out = reassemble( spl[0], splits )
+#print( torch.sum(out -a) )

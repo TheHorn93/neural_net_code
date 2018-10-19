@@ -127,20 +127,33 @@ class FullSetLoader:
         return inp_resized, gt_resized
     
     
+    def getDefaultBatch( self, bt_nbr, bt_size, is_cuda=True ):
+        bt, gt = self.getDefaultSet()
+        bt_t_size = ( 1,4,bt[0].shape[2], bt[0].shape[3], bt[0].shape[4] )
+        gt_t_size = ( 1,4,gt[0].shape[2], gt[0].shape[3], gt[0].shape[4] )
+        bt_t = torch.zeros( bt_t_size )
+        gt_t = torch.zeros( gt_t_size )
+        for it in range(4):
+          bt_t[:,it,:,:,:] = bt[it].unsqueeze(1)
+          gt_t[:,it,:,:,:] = gt[it].unsqueeze(1)
+
+        return bt_t, gt_t
+
     def getDefaultSet( self ):
         key_list = []
-        key_list.append( ["Lupine_22august","g","0","0","0","1","5"] )
-        key_list.append( ["Lupine_22august","d","0","1","0","1","5"] )
-        key_list.append( ["Lupine_22august","g","0","0","0","0","5"] )
-        key_list.append( ["Lupine_22august","d","1","0","0","0","5"] )
+        key_list.append( ["Lupine_22august","g","0","0","0","0","0.34","5"] )
+        key_list.append( ["Lupine_22august","d","60","0","1","0","0.71","5"] )
+        key_list.append( ["Lupine_22august","g","0","0","0","0","1.0","5"] )
+        key_list.append( ["Lupine_22august","d","120","1","0","0","1.41","5"] )
         inp_list = []
-        gt_list = []
+        gt_list = [] 
         for key in key_list:
             inp_path, teacher_path = self.keyToPath( key )
             inp, gt = self.loadInput( self.input_path +inp_path, self.input_path +teacher_path )
-            if self.is_cuda is not None:
-                inp = inp.cuda()
-                gt = gt.cuda()
+            #if self.is_cuda is not None:
+            #    inp = inp.cuda()
+            #    gt = gt.cuda()
+            #print( "THIS->" +str(inp.size()) +"<-THIS" )
             inp_list.append( inp )
             gt_list.append( gt )
         return inp_list, gt_list
@@ -188,7 +201,7 @@ class FullSetLoader:
         return teacher
 
 
-    def getDefaultBatch( self, bt_nbr, bt_size, cuda=True ):
+    def getDefaultBatch_( self, bt_nbr, bt_size, cuda=True ):
         r_fac_rnd = np.array( [0,1,2,3] )
         rot_rnd = np.array( [0,1,0,2] )
         x_flip_rnd = np.array( [0,0,0,1] )

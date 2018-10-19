@@ -18,20 +18,23 @@ def feedForward( net, loader, bt_nbr = 0, bt_size = 4, num_slices=[1,1,1] ):
     batch.requires_grad=False
     out_list = []
     for it in range( bt_size ):
-        input_data = batch[:,it,:,:,:].unsqueeze(1)
-        #split_list, tch_list = sd.splitInputAndTeacher( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups ) 
-        #del tch_list
-        #out_cpu_list = []
-        #for input_data in split_list:
-        #print( "COMPUTING" )
-        #time = 0
-        #for t__t in range(10):
-        #    st_pt = timeit.default_timer()
-        output = net( batch[:,it,:,:,:].unsqueeze(1), True )
-        #    ed_pt = timeit.default_timer()
-        #    time += ed_pt - st_pt
-        #print( "TIME: " +str(time) )
-        out_list.append( output.cpu().data.numpy() )
+        #input_data = batch[:,it,:,:,:].unsqueeze(1)
+        #split_list, tch_list, _ = sd.validationSplit( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups ) 
+        split_list, tch_list, _ = sd.validationSplit( batch[:,it,:,:,:].unsqueeze(1), teacher[:,it,:,:,:].unsqueeze(1), num_slices, net.ups ) 
+        del tch_list
+        out_cpu_list = []
+        num_sl = num_slices[0] *num_slices[1] *num_slices[2]
+        for s_it in range(num_sl):
+            c_input = split_list[s_it].cuda()
+            output = net( c_input, True )
+            del c_input
+            cpu_output = output.cpu().data.numpy()
+            out_cpu_list.append(cpu_output)
+            #del split_list[s_it]
+            #print(str(s_it) +"/" +str(len(split_list)))
+            del output
+        output = sd.reassemble( out_cpu_list, num_slices )
+        out_list.append( output )
         #print( "DELETING" )
         del output
         #out_cpu_list.append( output.cpu() )

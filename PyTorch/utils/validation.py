@@ -106,8 +106,9 @@ def FullSetEvaluation( network, loader, log, splits ):
         comp_loss, comp_rt_loss, comp_sl_loss = 0,0,0
         #print( str(inp.size()) +" -> " +str(gt.size()) )
         #print( cur_splits )
+        out_list = []
         del inp
-        del gt
+        #del gt
         for it in range( len(inp_l) ): 
             inp_sp = inp_l[it].cuda()
             gt_sp = gt_l[it].cuda()
@@ -116,17 +117,24 @@ def FullSetEvaluation( network, loader, log, splits ):
             loss, loss_rt, loss_sl = loss_func( output, gt_sp, 1 )
             del inp_sp
             del gt_sp
+            cpu_output = output.cpu().data.numpy()
+            out_list.append(cpu_output)
             comp_loss += loss.cpu().data.numpy() /num_splits
             comp_rt_loss += loss_rt.cpu().data.numpy() *w_l[it][0]
             comp_sl_loss += loss_sl.cpu().data.numpy() *w_l[it][1]
-            f1_temp = f1( output[0,0,:,:,:], gt_l[it][0,0,:,:,:] )
-            f1_temp *= w_l[it][0]
-            f1_score += f1_temp
+            #f1_temp = f1( output[0,0,:,:,:], gt_l[it][0,0,:,:,:] )
+            #f1_temp *= w_l[it][0]
             #print(str(f1_temp) +", w=" +str(w_l[it]) )
             del output
+            del cpu_output
             del loss
             del loss_rt
             del loss_sl
+        print("Assemble")
+        comp_output = split_data.reassemble( out_list, cur_splits )
+        del comp_output
+        f1_temp = f1( comp_output[0,0,:,:,:], gt[0,0,:,:,:] )
+        f1_score += f1_temp
         eval_loss += comp_loss
         eval_loss_rt += comp_sl_loss
         eval_loss_sl += comp_rt_loss
@@ -135,7 +143,7 @@ def FullSetEvaluation( network, loader, log, splits ):
         del comp_loss
         del comp_rt_loss
         del comp_sl_loss
-        print( str(loader.it) +"/" +str(loader.set_size) +"   " +str(key), end="\r"  )
+        print( str(loader.it) +"/" +str(loader.set_size) +"   " +str(key) +"\nF1-Score: " +str(f1_temp)  )
     eval_loss = eval_loss /loader.set_size
     eval_loss_rt = eval_loss_rt /loader.set_size
     eval_loss_sl = eval_loss_sl /loader.set_size
