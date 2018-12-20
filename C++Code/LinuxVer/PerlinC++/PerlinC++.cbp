@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="PerlinC++" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/PerlinC++" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="-p Test -i 4 -f 4 -s 256 256 120 -t 4 " />
+				<Compiler>
+					<Add option="-std=c++11" />
+					<Add option="-g" />
+					<Add directory="include" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add option="-pthread" />
+				</ResourceCompiler>
+				<Linker>
+					<Add option="-pthread" />
+					<Add directory="src" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/PerlinC++" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="-p Test -i 4 -f 4 -s 256 256 120 -t 4 " />
+				<Compiler>
+					<Add option="-O3" />
+					<Add option="-std=c++11" />
+					<Add directory="include" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-pthread" />
+					<Add directory="src" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-O3" />
+			<Add option="-Wall" />
+			<Add option="-std=c++11" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="include/ArgumentReader.h" />
+		<Unit filename="include/DataHandler.h" />
+		<Unit filename="include/FileHandler.h" />
+		<Unit filename="include/Utils.h" />
+		<Unit filename="include/Volume.h" />
+		<Unit filename="src/DataHandler.cpp" />
+		<Unit filename="src/FileHandler.cpp" />
+		<Unit filename="src/runPerlin.cpp" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
